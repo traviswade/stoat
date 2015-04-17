@@ -15,7 +15,8 @@ Rules.
 -> : {token, {list_to_atom(TokenChars), TokenLine, TokenChars}}.
 <- : {token, {list_to_atom(TokenChars), TokenLine, TokenChars}}.
 |> : {token, {list_to_atom(TokenChars), TokenLine, TokenChars}}.
-[(){}[]+-*\\;,]  : {token, {list_to_atom(TokenChars), TokenLine}}.
+[\(\){};,]  : {token, {list_to_atom(TokenChars), TokenLine, TokenChars}}.
+[+\-*/] : {token, {list_to_atom(TokenChars), TokenLine}}.
 
 {D}+  : {token, {integer, TokenLine, list_to_integer(TokenChars)}}.
 (\+|-)?[0-9]+\.[0-9]+((E|e)(\+|-)?[0-9]+)? : {token, {float, TokenLine, list_to_float(TokenChars)}}.
