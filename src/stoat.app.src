@@ -1,0 +1,11 @@
+{application, stoat,
+[
+    {description, "nothing to see here"},
+    {vsn, "0.0"},
+    {modules, [
+        stoat
+	]},
+    {registered, []},
+    {applications, []},
+    {env, []}
+]}.
