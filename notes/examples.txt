@@ -1,17 +1,22 @@
 
 do_something (#rec{a=A}) = A + 1;
-             ([A|_])     = A \m>     fun1
-                             |       fun2         ~ {ok, {V1, _}}
-                             |       #rec{v=$}
-                             /m\m2>  fun3
-                             |       fun4/1:V1;
+             ([A|_])     = A \m>  fun1
+                               |  fun2      ~ {ok, {V1, _}}
+                               |  #rec{v=$}
+                          /m\m2>  fun3
+                               |  fun4/1:V1;
              \>  fun4/2:1
+
+do_something ([$|_]) \m> fun1 ...
 
 somethingelse1 (Val) = f(g(Val)).
 somethingelse2 = f(g($)).
 somethingelse3 \> f | g.
 
-signup \m:aybe> get_partner_dat ~> Part
+signup \m:aybe> get_partner_dat ~> Partner
+              | validate
+           /m2\
+              | save
 
 
 |> \> /> |+m> |m:maybe> |s(S)> 
@@ -23,3 +28,7 @@ map/2:(I)->I+1
 fun (L) -> map(fun(I)->I+1 end, L) end
 lists:map/2:F
 lists:map/2::L
+
+%*
+CONTROL STATEMENTS
+*%

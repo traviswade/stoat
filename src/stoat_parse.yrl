@@ -4,7 +4,7 @@ Nonterminals
 form
 expr exprs expr_100 expr_150 expr_160 expr_200 expr_300 expr_400
 expr_500 expr_600 expr_700 expr_800 expr_max
-function function_clauses function_clause
+function function_clauses function_clause function_name
 argument_list
 clause_args clause_guard clause_body
 guard
@@ -16,6 +16,7 @@ Terminals
 '(' ')' ',' '->' '{' '}' '[' ']' '<-' ';'
 '*' '/' 'div' 'rem' 'band' 'and'
 '+' '-' 'bor' 'bxor' 'bsl' 'bsr' 'or' 'xor'
+'='
 'when'
 integer float atom var
 dot.
@@ -29,21 +30,28 @@ function -> function_clauses : build_function('$1').
 function_clauses -> function_clause : ['$1'].
 function_clauses -> function_clause ';' function_clauses : ['$1'|'$3'].
 
-function_clause -> atom clause_args clause_guard clause_body : 
+function_clause -> function_name clause_args clause_guard clause_body : 
 	{clause, ?line('$1'), element(3, '$1'), '$2', $3, '$4'}.
+	
+function_name -> atom : '$1'.
+% NOTE: this will fail in build_function for the first clause
+% so the first clause needs a name. Probably not the right place
+% to be enforcing that.
+function_name -> '$empty' : noname.
 	
 clause_args -> argument_list : element(1, '$1').
 
 argument_list -> '(' ')' : {[],?line('$1')}.
-% argument_list -> '(' exprs ')' : {'$2',?line('$1')}.
+argument_list -> '(' exprs ')' : {'$2',?line('$1')}.
 
 % clause_guard -> 'when' guard : '$2'.
 clause_guard -> '$empty' : [].
 
-clause_body -> '->' exprs: '$2'.
+clause_body -> '=' exprs: '$2'.
 
 exprs -> expr : ['$1'].
-% exprs -> expr ',' exprs : ['$1' | '$3'].
+exprs -> expr ',' exprs : ['$1' | '$3'].
+
 
 % expr -> 'catch' expr : {'catch',?line('$1'),'$2'}.
 % expr -> expr_100 : '$1'.
@@ -157,3 +165,7 @@ mapl(F, [H|T]) ->
 	[V | mapl(F,T)];
 mapl(_, []) ->
 	[].
+	
+show (Item) ->
+	io:format("show: ~p", [Item]),
+	Item.
