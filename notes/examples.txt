@@ -1,0 +1,25 @@
+
+do_something (#rec{a=A}) = A + 1;
+             ([A|_])     = A \m>     fun1
+                             |       fun2         ~ {ok, {V1, _}}
+                             |       #rec{v=$}
+                             /m\m2>  fun3
+                             |       fun4/1:V1;
+             \>  fun4/2:1
+
+somethingelse1 (Val) = f(g(Val)).
+somethingelse2 = f(g($)).
+somethingelse3 \> f | g.
+
+signup \m:aybe> get_partner_dat ~> Part
+
+
+|> \> /> |+m> |m:maybe> |s(S)> 
+             
+fun1/3:A
+fun1/3:A::B
+
+map/2:(I)->I+1
+fun (L) -> map(fun(I)->I+1 end, L) end
+lists:map/2:F
+lists:map/2::L
