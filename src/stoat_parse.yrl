@@ -30,14 +30,11 @@ function -> function_clauses : build_function('$1').
 function_clauses -> function_clause : ['$1'].
 function_clauses -> function_clause ';' function_clauses : ['$1'|'$3'].
 
-function_clause -> function_name clause_args clause_guard clause_body : 
+function_clause -> atom clause_args clause_guard clause_body : 
 	{clause, ?line('$1'), element(3, '$1'), '$2', $3, '$4'}.
-	
-function_name -> atom : '$1'.
-% NOTE: this will fail in build_function for the first clause
-% so the first clause needs a name. Probably not the right place
-% to be enforcing that.
-function_name -> '$empty' : noname.
+function_clause -> clause_args clause_guard clause_body :
+	show({noname_clause, ?line(hd('$3')), noname, '$1', '$2', '$3'}).
+		
 	
 clause_args -> argument_list : element(1, '$1').
 
@@ -52,10 +49,8 @@ clause_body -> '=' exprs: '$2'.
 exprs -> expr : ['$1'].
 exprs -> expr ',' exprs : ['$1' | '$3'].
 
-
 % expr -> 'catch' expr : {'catch',?line('$1'),'$2'}.
-% expr -> expr_100 : '$1'.
-expr -> integer '+' integer : ?mkop2('$1', '$2', '$3').
+expr -> expr_100 : '$1'.
 
 % expr_100 -> expr_150 '=' expr_100 : {match,?line('$2'),'$1','$3'}.
 % expr_100 -> expr_150 '!' expr_100 : ?mkop2('$1', '$2', '$3').
@@ -133,15 +128,14 @@ Erlang code.
 
 -define(line(Tup), element(2, Tup)).
 -define(mkop2(L, OpPos, R),
-	io:format("trying to make op2: ~p ~p ~p ~n", [L, OpPos, R]),
         begin
             {Op,Pos} = OpPos,
             {op,Pos,Op,L,R}
         end).
+-define(p, error_logger:info_msg).
 
 
 build_function(Cs) ->
-	io:format("'trying to build function', ~p~n", [Cs]),
 	C1 = hd(Cs),
     Name = element(3, C1),
     Arity = length(element(4, C1)),
@@ -149,9 +143,11 @@ build_function(Cs) ->
 
 check_clauses(Cs, Name, Arity) ->
      mapl(fun ({clause,L,N,As,G,B}) when N =:= Name, length(As) =:= Arity ->
-		 {clause,L,As,G,B};
-	     ({clause,L,_N,_As,_G,_B}) ->
-		 ret_err(L, "head mismatch") end, Cs).
+		 	{clause, L, As, G, B};
+		({noname_clause, L, _, As, G, B}) when length(As) =:= Arity ->
+			{clause, L, As, G, B};
+		({clause,L,_N,_As,_G,_B}) ->
+		 	ret_err(L, "head mismatch") end, Cs).
 		
 ret_err(L, S) ->
     {location,Location} = get_attribute(L, location),
@@ -167,5 +163,5 @@ mapl(_, []) ->
 	[].
 	
 show (Item) ->
-	io:format("show: ~p", [Item]),
+	?p("show: ~p", [Item]),
 	Item.
