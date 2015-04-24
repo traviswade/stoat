@@ -11,7 +11,7 @@ a_test () ->
 	stoat:show("a () = 1 + 2."),
 	stoat:show("a () = 1 + 2; () = 2 + 1."),
 	stoat:show("a () = 1 + 2; a () = 2 + 1."),
-	stoat:show("a (X) = \"A\", X."),
+	stoat:show("a (X) = \"A\\\"\", X."),
 	stoat:show("a () = A andalso B.").
 	
 
