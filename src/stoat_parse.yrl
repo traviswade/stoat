@@ -4,10 +4,13 @@ Nonterminals
 form
 expr exprs expr_100 expr_150 expr_160 expr_200 expr_300 expr_400
 expr_500 expr_600 expr_700 expr_800 expr_max
+list_comprehension lc_expr lc_exprs
 function function_clauses function_clause function_name
 argument_list
 clause_args clause_guard clause_body
 guard
+function_call
+tuple
 atomic strings list tail 
 binary bin_elements bin_element bit_size_expr 
 bit_expr opt_bit_size_expr opt_bit_type_list bit_type bit_type_list
@@ -16,6 +19,7 @@ add_op mult_op prefix_op list_op comp_op.
 Terminals
 
 '(' ')' ',' '->' '{' '}' '[' ']' '<-' ';' '|' '<<' '>>' ':' '!'
+'<=' '||'
 '==' '=:=' '=/=' '<' '>' '>=' '=<' '/='
 '++' '--'
 '*' '/' 'div' 'rem' 'band' 'and'
@@ -62,6 +66,8 @@ guard -> exprs ';' guard : ['$1'|'$3'].
 % expr -> 'catch' expr : {'catch',?line('$1'),'$2'}.
 expr -> expr_100 : '$1'.
 
+function_call -> expr_800 argument_list : {call,?line('$1'),'$1',element(1, '$2')}.
+
 % no assignment!
 % expr_100 -> expr_150 '=' expr_100 : {match,?line('$2'),'$1','$3'}.
 expr_100 -> expr_150 '!' expr_100 : ?mkop2('$1', '$2', '$3').
@@ -89,7 +95,7 @@ expr_600 -> prefix_op expr_700 : ?mkop1('$1', '$2').
 % expr_600 -> map_expr : '$1'.
 expr_600 -> expr_700 : '$1'.
 
-% expr_700 -> function_call : '$1'.
+expr_700 -> function_call : '$1'.
 % expr_700 -> record_expr : '$1'.
 expr_700 -> expr_800 : '$1'.
 
@@ -100,10 +106,9 @@ expr_max -> var : '$1'.
 expr_max -> atomic : '$1'.
 expr_max -> list : '$1'.
 expr_max -> binary : '$1'.
-% expr_max -> list_comprehension : '$1'.
+expr_max -> list_comprehension : '$1'.
 % expr_max -> binary_comprehension : '$1'.
-% expr_max -> tuple : '$1'.
-%%expr_max -> struct : '$1'.
+expr_max -> tuple : '$1'.
 expr_max -> '(' expr ')' : '$2'.
 % expr_max -> 'begin' exprs 'end' : {block,?line('$1'),'$2'}.
 % expr_max -> if_expr : '$1'.
@@ -145,14 +150,31 @@ bit_type -> atom ':' integer : { element(3,'$1'), element(3,'$3') }.
 
 bit_size_expr -> expr_max : '$1'.
 
+list_comprehension -> '[' expr '||' lc_exprs ']' : {lc, ?line('$1'), '$2', '$4'}.
+
+% in progress!
+lc_exprs -> lc_expr : ['$1'].
+lc_exprs -> lc_expr ',' lc_exprs : ['$1'|'$3'].
+
+lc_expr -> expr : '$1'.
+lc_expr -> expr '<-' expr : {generate, ?line('$2'), '$1', '$3'}.
+% what is this?
+lc_expr -> expr '<=' expr : {b_generate, ?line('$2'), '$1', '$3'}.
+
+tuple -> '{' '}'       : {tuple, ?line('$1'), []}.
+tuple -> '{' exprs '}' : {tuple, ?line('$1'), '$2'}.
+
+
+
 % atomic -> char : '$1'.
 atomic -> integer : '$1'.
 atomic -> float : '$1'.
 atomic -> atom : '$1'.
 atomic -> strings : '$1'.
 
-% what is this for?
+
 strings -> string : '$1'.
+% what is this for?
 strings -> string strings :
 	{string,?line('$1'),element(3, '$1') ++ element(3, '$2')}.
 
