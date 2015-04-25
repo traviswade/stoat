@@ -15,6 +15,11 @@ a_test () ->
 	stoat:show("a () = A andalso B."),
 	stoat:show("a () = f(x)."),
 	stoat:show("a () = {1, 2}."),
-	stoat:show("a () = [A||A<-B].").
+	stoat:show("a () = [A||A<-B]."),
+	stoat:show("a () = fn a:b/1."),
+	stoat:show("a () = fn () -> 1 end."),
+	stoat:show("a () = ^() -> 1."),
+	stoat:show("a () = fn (a, b) -> 2 end."),
+	stoat:show("b () = ^(a) -> 1.").
 	
 

@@ -17,14 +17,17 @@ Rules.
 \.              : {token, {dot, TokenLine}}.
 ->              : {token, {list_to_atom(TokenChars), TokenLine}}.
 <-              : {token, {list_to_atom(TokenChars), TokenLine}}.
-\|\|              : {token, {list_to_atom(TokenChars), TokenLine}}.
+=>              : {token, {list_to_atom(TokenChars), TokenLine}}.
+\|\|            : {token, {list_to_atom(TokenChars), TokenLine}}.
 |>              : {token, {list_to_atom(TokenChars), TokenLine}}.
 [\(\){}\[\];,]  : {token, {list_to_atom(TokenChars), TokenLine}}.
-[+\-*/=]        : {token, {list_to_atom(TokenChars), TokenLine}}.
+[+\-*/=:\^]     : {token, {list_to_atom(TokenChars), TokenLine}}.
 
 
 andalso         : {token, {list_to_atom(TokenChars), TokenLine}}.
 orelse          : {token, {list_to_atom(TokenChars), TokenLine}}.
+fn              : {token, {list_to_atom(TokenChars), TokenLine}}.
+end             : {token, {list_to_atom(TokenChars), TokenLine}}.
 [a-z][0-9a-zA-Z_]*  : {token, {atom, TokenLine, TokenChars}}.
 
 

@@ -5,6 +5,9 @@ form
 expr exprs expr_100 expr_150 expr_160 expr_200 expr_300 expr_400
 expr_500 expr_600 expr_700 expr_800 expr_max
 list_comprehension lc_expr lc_exprs
+fun_expr fun_clause fun_clauses fun_clause_body
+short_fun_clauses short_fun_clause
+atom_or_var integer_or_var
 function function_clauses function_clause function_name
 argument_list
 clause_args clause_guard clause_body
@@ -17,17 +20,17 @@ bit_expr opt_bit_size_expr opt_bit_type_list bit_type bit_type_list
 add_op mult_op prefix_op list_op comp_op.
 
 Terminals
-
+char integer float atom string var
 '(' ')' ',' '->' '{' '}' '[' ']' '<-' ';' '|' '<<' '>>' ':' '!'
-'<=' '||'
+'<=' '||' '=>' '^'
 '==' '=:=' '=/=' '<' '>' '>=' '=<' '/='
 '++' '--'
-'*' '/' 'div' 'rem' 'band' 'and'
+'*' '/' 'div' 'rem' 'band' 'and' 'fn' 'end'
 'andalso' 'orelse'
 '+' '-' 'bor' 'bxor' 'bsl' 'bsr' 'or' 'xor' 'bnot' 'not'
 '='
 'when'
-char integer float atom string var
+
 
 dot.
 
@@ -41,7 +44,7 @@ function_clauses -> function_clause : ['$1'].
 function_clauses -> function_clause ';' function_clauses : ['$1'|'$3'].
 
 function_clause -> atom clause_args clause_guard clause_body : 
-	{clause, ?line('$1'), element(3, '$1'), '$2', $3, '$4'}.
+	{clause, ?line('$1'), ?tokch('$1'), '$2', $3, '$4'}.
 % will fail in build_function in first position
 function_clause -> clause_args clause_guard clause_body :
 	show({noname_clause, ?line(hd('$3')), noname, '$1', '$2', '$3'}).
@@ -49,24 +52,18 @@ function_clause -> clause_args clause_guard clause_body :
 	
 clause_args -> argument_list : element(1, '$1').
 
-argument_list -> '(' ')' : {[],?line('$1')}.
-argument_list -> '(' exprs ')' : {'$2',?line('$1')}.
+
 
 clause_guard -> 'when' guard : '$2'.
 clause_guard -> '$empty' : [].
 
 clause_body -> '=' exprs: '$2'.
 
-exprs -> expr : ['$1'].
-exprs -> expr ',' exprs : ['$1' | '$3'].
 
-guard -> exprs : ['$1'].
-guard -> exprs ';' guard : ['$1'|'$3'].
 
 % expr -> 'catch' expr : {'catch',?line('$1'),'$2'}.
 expr -> expr_100 : '$1'.
 
-function_call -> expr_800 argument_list : {call,?line('$1'),'$1',element(1, '$2')}.
 
 % no assignment!
 % expr_100 -> expr_150 '=' expr_100 : {match,?line('$2'),'$1','$3'}.
@@ -114,7 +111,7 @@ expr_max -> '(' expr ')' : '$2'.
 % expr_max -> if_expr : '$1'.
 % expr_max -> case_expr : '$1'.
 % expr_max -> receive_expr : '$1'.
-% expr_max -> fun_expr : '$1'.
+expr_max -> fun_expr : '$1'.
 % expr_max -> try_expr : '$1'.
 
 list -> '[' ']' : {nil,?line('$1')}.
@@ -145,8 +142,8 @@ opt_bit_type_list -> '$empty' : default.
 bit_type_list -> bit_type '-' bit_type_list : ['$1' | '$3'].
 bit_type_list -> bit_type : ['$1'].
 
-bit_type -> atom             : element(3,'$1').
-bit_type -> atom ':' integer : { element(3,'$1'), element(3,'$3') }.
+bit_type -> atom             : ?tokch('$1').
+bit_type -> atom ':' integer : { ?tokch('$1'), ?tokch('$3') }.
 
 bit_size_expr -> expr_max : '$1'.
 
@@ -165,6 +162,52 @@ tuple -> '{' '}'       : {tuple, ?line('$1'), []}.
 tuple -> '{' exprs '}' : {tuple, ?line('$1'), '$2'}.
 
 
+function_call -> expr_800 argument_list : {call,?line('$1'),'$1',element(1, '$2')}.
+
+fun_expr -> atom '/' integer :
+	{'fun',?line('$1'),{function,element(3, '$1'),element(3, '$3')}}.
+fun_expr -> 'fn' atom_or_var ':' atom_or_var '/' integer_or_var :
+	{'fun',?line('$1'),{function,'$2','$4','$6'}}.
+fun_expr -> atom ':' atom '/' integer :
+	{'fun',?line('$1'),{function,'$1','$3','$5'}}.
+fun_expr -> '^' short_fun_clauses : build_fun(?line('$1'), '$2').
+fun_expr -> 'fn' fun_clauses 'end' : build_fun(?line('$1'), '$2').
+
+atom_or_var -> atom : '$1'.
+atom_or_var -> var : '$1'.
+
+integer_or_var -> integer : '$1'.
+integer_or_var -> var : '$1'.
+
+% enforce single expr. must be a better way.
+short_fun_clauses -> short_fun_clause : ['$1'].
+short_fun_clauses -> short_fun_clause ';' short_fun_clauses : ['$1' | '$3'].
+
+fun_clauses -> fun_clause : ['$1'].
+fun_clauses -> fun_clause ';' fun_clauses : ['$1' | '$3'].
+
+fun_clause -> argument_list clause_guard fun_clause_body :
+	{Args,Pos} = '$1',
+	{clause,Pos,'fun',Args,'$2','$3'}.
+		
+fun_clause -> var argument_list clause_guard fun_clause_body :
+	{clause,element(2, '$1'),element(3, '$1'),element(1, '$2'),'$3','$4'}.
+	
+short_fun_clause -> argument_list '->' expr:
+	{Args, Pos} = '$1',
+	{clause, Pos, 'fun', Args, [], ['$3']}.
+	% {clause, 1, 'fun', [], [], ['$3']}.
+	
+fun_clause_body -> '->' exprs: '$2'.
+	
+argument_list -> '(' ')' : {[],?line('$1')}.
+argument_list -> '(' exprs ')' : {'$2',?line('$1')}.
+
+exprs -> expr : ['$1'].
+exprs -> expr ',' exprs : ['$1' | '$3'].
+
+guard -> exprs : ['$1'].
+guard -> exprs ';' guard : ['$1'|'$3'].
 
 % atomic -> char : '$1'.
 atomic -> integer : '$1'.
@@ -176,7 +219,7 @@ atomic -> strings : '$1'.
 strings -> string : '$1'.
 % what is this for?
 strings -> string strings :
-	{string,?line('$1'),element(3, '$1') ++ element(3, '$2')}.
+	{string,?line('$1'),?tokch('$1') ++ ?tokch('$2')}.
 
 prefix_op -> '+' : '$1'.
 prefix_op -> '-' : '$1'.
@@ -213,6 +256,7 @@ comp_op -> '=/=' : '$1'.
 
 Erlang code.
 
+-define(tokch(Tup), element(3, Tup)).
 -define(line(Tup), element(2, Tup)).
 -define(mkop1(OpPos, A),
         begin
@@ -229,9 +273,20 @@ Erlang code.
 
 build_function(Cs) ->
 	C1 = hd(Cs),
-    Name = element(3, C1),
+    Name = ?tokch(C1),
     Arity = length(element(4, C1)),
     {function, ?line(C1), Name, Arity, check_clauses(Cs, Name, Arity)}.
+
+build_fun(Line, Cs) ->
+    Name = ?tokch(hd(Cs)),
+    Arity = length(element(4, hd(Cs))),
+    CheckedCs = check_clauses(Cs, Name, Arity),
+    case Name of
+        'fun' ->
+            {'fun',Line,{clauses,CheckedCs}};
+        Name ->
+            {named_fun,Line,Name,CheckedCs}
+    end.
 
 check_clauses(Cs, Name, Arity) -> [check_clause(C, Name, Arity) || C <- Cs].
 check_clause ({clause, L, Name, As, G, B}, Name, Arity) when length(As) =:= Arity ->
