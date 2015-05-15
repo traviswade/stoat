@@ -6,7 +6,8 @@ expr exprs expr_100 expr_150 expr_160 expr_200 expr_300 expr_400
 expr_500 expr_600 expr_700 expr_800 expr_max
 list_comprehension lc_expr lc_exprs
 fun_expr fun_clause fun_clauses fun_clause_body
-short_fun_clauses short_fun_clause
+fun_argument_list
+short_fun_clause
 atom_or_var integer_or_var
 function function_clauses function_clause function_name
 argument_list
@@ -22,7 +23,7 @@ add_op mult_op prefix_op list_op comp_op.
 Terminals
 char integer float atom string var
 '(' ')' ',' '->' '{' '}' '[' ']' '<-' ';' '|' '<<' '>>' ':' '!'
-'<=' '||' '=>' '^'
+'<=' '||' '=>' '&'
 '==' '=:=' '=/=' '<' '>' '>=' '=<' '/='
 '++' '--'
 '*' '/' 'div' 'rem' 'band' 'and' 'fn' 'end'
@@ -44,7 +45,7 @@ function_clauses -> function_clause : ['$1'].
 function_clauses -> function_clause ';' function_clauses : ['$1'|'$3'].
 
 function_clause -> atom clause_args clause_guard clause_body : 
-	{clause, ?line('$1'), ?tokch('$1'), '$2', $3, '$4'}.
+	{clause, ?line('$1'), ?tokch('$1'), '$2', '$3', '$4'}.
 % will fail in build_function in first position
 function_clause -> clause_args clause_guard clause_body :
 	show({noname_clause, ?line(hd('$3')), noname, '$1', '$2', '$3'}).
@@ -57,7 +58,7 @@ clause_args -> argument_list : element(1, '$1').
 clause_guard -> 'when' guard : '$2'.
 clause_guard -> '$empty' : [].
 
-clause_body -> '=' exprs: '$2'.
+clause_body -> '->' exprs: '$2'.
 
 
 
@@ -162,6 +163,10 @@ tuple -> '{' '}'       : {tuple, ?line('$1'), []}.
 tuple -> '{' exprs '}' : {tuple, ?line('$1'), '$2'}.
 
 
+% record_expr -> '#' atom '.' atom.
+
+
+
 function_call -> expr_800 argument_list : {call,?line('$1'),'$1',element(1, '$2')}.
 
 fun_expr -> atom '/' integer :
@@ -170,7 +175,7 @@ fun_expr -> 'fn' atom_or_var ':' atom_or_var '/' integer_or_var :
 	{'fun',?line('$1'),{function,'$2','$4','$6'}}.
 fun_expr -> atom ':' atom '/' integer :
 	{'fun',?line('$1'),{function,'$1','$3','$5'}}.
-fun_expr -> '^' short_fun_clauses : build_fun(?line('$1'), '$2').
+fun_expr -> short_fun_clause : build_fun(?line('$1'), ['$1']).
 fun_expr -> 'fn' fun_clauses 'end' : build_fun(?line('$1'), '$2').
 
 atom_or_var -> atom : '$1'.
@@ -179,9 +184,8 @@ atom_or_var -> var : '$1'.
 integer_or_var -> integer : '$1'.
 integer_or_var -> var : '$1'.
 
-% enforce single expr. must be a better way.
-short_fun_clauses -> short_fun_clause : ['$1'].
-short_fun_clauses -> short_fun_clause ';' short_fun_clauses : ['$1' | '$3'].
+% short_fun_clauses -> short_fun_clause : ['$1'].
+% short_fun_clauses -> short_fun_clause ';' short_fun_clauses : ['$1' | '$3'].
 
 fun_clauses -> fun_clause : ['$1'].
 fun_clauses -> fun_clause ';' fun_clauses : ['$1' | '$3'].
@@ -193,13 +197,17 @@ fun_clause -> argument_list clause_guard fun_clause_body :
 fun_clause -> var argument_list clause_guard fun_clause_body :
 	{clause,element(2, '$1'),element(3, '$1'),element(1, '$2'),'$3','$4'}.
 	
-short_fun_clause -> argument_list '->' expr:
+short_fun_clause -> fun_argument_list '->' expr:
 	{Args, Pos} = '$1',
 	{clause, Pos, 'fun', Args, [], ['$3']}.
-	% {clause, 1, 'fun', [], [], ['$3']}.
 	
 fun_clause_body -> '->' exprs: '$2'.
 	
+fun_argument_list -> '<' '>' : {[],?line('$1')}.
+fun_argument_list -> '<' exprs '>' : {'$2',?line('$1')}.
+fun_argument_list -> '$empty' : {[], 0}.
+
+
 argument_list -> '(' ')' : {[],?line('$1')}.
 argument_list -> '(' exprs ')' : {'$2',?line('$1')}.
 
@@ -248,9 +256,9 @@ list_op -> '--' : '$1'.
 comp_op -> '==' : '$1'.
 comp_op -> '/=' : '$1'.
 comp_op -> '=<' : '$1'.
-comp_op -> '<' : '$1'.
+% comp_op -> '<' : '$1'.
 comp_op -> '>=' : '$1'.
-comp_op -> '>' : '$1'.
+% comp_op -> '>' : '$1'.
 comp_op -> '=:=' : '$1'.
 comp_op -> '=/=' : '$1'.
 
@@ -272,6 +280,7 @@ Erlang code.
 
 
 build_function(Cs) ->
+	error_logger:info_msg("building function: ~p~n", [Cs]),
 	C1 = hd(Cs),
     Name = ?tokch(C1),
     Arity = length(element(4, C1)),
@@ -289,6 +298,7 @@ build_fun(Line, Cs) ->
     end.
 
 check_clauses(Cs, Name, Arity) -> [check_clause(C, Name, Arity) || C <- Cs].
+
 check_clause ({clause, L, Name, As, G, B}, Name, Arity) when length(As) =:= Arity ->
 		{clause, L, As, G, B};
 check_clause ({noname_clause, L, _, As, G, B}, Name, Arity) when length(As) =:= Arity ->

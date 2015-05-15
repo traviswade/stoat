@@ -2,33 +2,35 @@
 Definitions.
 
 D = [0-9]
-S = [\s\t]
+S = [\s\t\n]
 
 
 Rules.
 
 
 
-[A-Z_][0-9a-zA-Z_]* : {token, {var, TokenLine, TokenChars}}.
+[A-Z_][0-9a-zA-Z_]* : {token, {var, TokenLine, list_to_atom(TokenChars)}}.
 
-% "[0-9a-zA-Z_]*"     : {token, {string, TokenLine, strip(TokenChars, TokenLen)}}.
+\%.*\n                : skip_token.
 "([^"\\]|\\.)*"       : {token, {string, TokenLine, strip(TokenChars, TokenLen)}}.
 
 \.              : {token, {dot, TokenLine}}.
 ->              : {token, {list_to_atom(TokenChars), TokenLine}}.
 <-              : {token, {list_to_atom(TokenChars), TokenLine}}.
 =>              : {token, {list_to_atom(TokenChars), TokenLine}}.
+<<              : {token, {list_to_atom(TokenChars), TokenLine}}.
+>>              : {token, {list_to_atom(TokenChars), TokenLine}}.
 \|\|            : {token, {list_to_atom(TokenChars), TokenLine}}.
 |>              : {token, {list_to_atom(TokenChars), TokenLine}}.
-[\(\){}\[\];,]  : {token, {list_to_atom(TokenChars), TokenLine}}.
-[+\-*/=:\^]     : {token, {list_to_atom(TokenChars), TokenLine}}.
+[\(\){}\[\];,\|]  : {token, {list_to_atom(TokenChars), TokenLine}}.
+[+\-*/=:\&<>]   : {token, {list_to_atom(TokenChars), TokenLine}}.
 
 
 andalso         : {token, {list_to_atom(TokenChars), TokenLine}}.
 orelse          : {token, {list_to_atom(TokenChars), TokenLine}}.
 fn              : {token, {list_to_atom(TokenChars), TokenLine}}.
 end             : {token, {list_to_atom(TokenChars), TokenLine}}.
-[a-z][0-9a-zA-Z_]*  : {token, {atom, TokenLine, TokenChars}}.
+[a-z][0-9a-zA-Z_]*  : {token, {atom, TokenLine, list_to_atom(TokenChars)}}.
 
 
 
