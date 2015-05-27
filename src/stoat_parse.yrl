@@ -3,8 +3,10 @@
 Nonterminals
 form
 expr exprs expr_100 expr_150 expr_160 expr_200 expr_300 expr_400
-expr_500 expr_600 expr_700 expr_800 expr_max
+expr_500 expr_600 expr_650 expr_700 expr_800 expr_max
 list_comprehension lc_expr lc_exprs
+binary_comprehension
+record_expr record_fields record_tuple record_field
 fun_expr fun_clause fun_clauses fun_clause_body
 fun_argument_list
 short_fun_clause
@@ -18,12 +20,12 @@ tuple
 atomic strings list tail 
 binary bin_elements bin_element bit_size_expr 
 bit_expr opt_bit_size_expr opt_bit_type_list bit_type bit_type_list
-add_op mult_op prefix_op list_op comp_op.
+add_op mult_op prefix_op list_op comp_op pipe_op.
 
 Terminals
 char integer float atom string var
 '(' ')' ',' '->' '{' '}' '[' ']' '<-' ';' '|' '<<' '>>' ':' '!'
-'<=' '||' '=>' '&'
+'<=' '||' '=>' '&' '#' '.' '|>'
 '==' '=:=' '=/=' '<' '>' '>=' '=<' '/='
 '++' '--'
 '*' '/' 'div' 'rem' 'band' 'and' 'fn' 'end'
@@ -48,7 +50,7 @@ function_clause -> atom clause_args clause_guard clause_body :
 	{clause, ?line('$1'), ?tokch('$1'), '$2', '$3', '$4'}.
 % will fail in build_function in first position
 function_clause -> clause_args clause_guard clause_body :
-	show({noname_clause, ?line(hd('$3')), noname, '$1', '$2', '$3'}).
+	{noname_clause, ?line(hd('$3')), noname, '$1', '$2', '$3'}.
 	
 	
 clause_args -> argument_list : element(1, '$1').
@@ -89,12 +91,15 @@ expr_400 -> expr_500 : '$1'.
 expr_500 -> expr_500 mult_op expr_600 : ?mkop2('$1', '$2', '$3').
 expr_500 -> expr_600 : '$1'.
 
-expr_600 -> prefix_op expr_700 : ?mkop1('$1', '$2').
+expr_600 -> prefix_op expr_650 : ?mkop1('$1', '$2').
 % expr_600 -> map_expr : '$1'.
-expr_600 -> expr_700 : '$1'.
+expr_600 -> expr_650 : '$1'.
+
+expr_650 -> expr_650 pipe_op expr_700 : ?mkop2('$1', '$2', '$3').
+expr_650 -> expr_700 : '$1'.
 
 expr_700 -> function_call : '$1'.
-% expr_700 -> record_expr : '$1'.
+expr_700 -> record_expr : '$1'.
 expr_700 -> expr_800 : '$1'.
 
 % expr_800 -> expr_max ':' expr_max : {remote,?line('$2'),'$1','$3'}.
@@ -105,7 +110,7 @@ expr_max -> atomic : '$1'.
 expr_max -> list : '$1'.
 expr_max -> binary : '$1'.
 expr_max -> list_comprehension : '$1'.
-% expr_max -> binary_comprehension : '$1'.
+expr_max -> binary_comprehension : '$1'.
 expr_max -> tuple : '$1'.
 expr_max -> '(' expr ')' : '$2'.
 % expr_max -> 'begin' exprs 'end' : {block,?line('$1'),'$2'}.
@@ -149,7 +154,9 @@ bit_type -> atom ':' integer : { ?tokch('$1'), ?tokch('$3') }.
 bit_size_expr -> expr_max : '$1'.
 
 list_comprehension -> '[' expr '||' lc_exprs ']' : {lc, ?line('$1'), '$2', '$4'}.
-
+binary_comprehension -> '<<' binary '||' lc_exprs '>>' :
+	{bc,?line('$1'),'$2','$4'}.
+	
 % in progress!
 lc_exprs -> lc_expr : ['$1'].
 lc_exprs -> lc_expr ',' lc_exprs : ['$1'|'$3'].
@@ -164,6 +171,28 @@ tuple -> '{' exprs '}' : {tuple, ?line('$1'), '$2'}.
 
 
 % record_expr -> '#' atom '.' atom.
+
+% TODO: MAPS!
+
+%%%%%%%%%% records %%%%%%%%%%%%%%%%%%%%%%%%%
+
+record_expr -> '#' atom '.' atom : {record_index,?line('$1'),element(3, '$2'),'$4'}.
+record_expr -> '#' atom record_tuple : {record,?line('$1'),element(3, '$2'),'$3'}.
+record_expr -> expr_max '#' atom '.' atom : {record_field,?line('$2'),'$1',element(3, '$3'),'$5'}.
+record_expr -> expr_max '#' atom record_tuple : {record,?line('$2'),'$1',element(3, '$3'),'$4'}.
+record_expr -> record_expr '#' atom '.' atom : {record_field,?line('$2'),'$1',element(3, '$3'),'$5'}.
+record_expr -> record_expr '#' atom record_tuple : {record,?line('$2'),'$1',element(3, '$3'),'$4'}.
+
+record_tuple -> '{' '}' : [].
+record_tuple -> '{' record_fields '}' : '$2'.
+
+record_fields -> record_field : ['$1'].
+record_fields -> record_field ',' record_fields : ['$1' | '$3'].
+
+record_field -> var '=' expr : {record_field,?line('$1'),'$1','$3'}.
+record_field -> atom '=' expr : {record_field,?line('$1'),'$1','$3'}.
+
+%%%%%%%%%%%%% functions %%%%%%%%%%%%%%%%%%%%
 
 
 
@@ -197,14 +226,15 @@ fun_clause -> argument_list clause_guard fun_clause_body :
 fun_clause -> var argument_list clause_guard fun_clause_body :
 	{clause,element(2, '$1'),element(3, '$1'),element(1, '$2'),'$3','$4'}.
 	
-short_fun_clause -> fun_argument_list '->' expr:
-	{Args, Pos} = '$1',
-	{clause, Pos, 'fun', Args, [], ['$3']}.
+short_fun_clause -> '(' fun_argument_list '|' exprs ')':
+	{Args, Pos} = '$2',
+	{clause, Pos, 'fun', Args, [], '$4'}.
 	
 fun_clause_body -> '->' exprs: '$2'.
 	
-fun_argument_list -> '<' '>' : {[],?line('$1')}.
-fun_argument_list -> '<' exprs '>' : {'$2',?line('$1')}.
+% fun_argument_list -> '<' '>' : {[],?line('$1')}.
+% fun_argument_list -> '<' exprs '>' : {'$2',?line('$1')}.
+fun_argument_list -> exprs : {'$1', 0}.
 fun_argument_list -> '$empty' : {[], 0}.
 
 
@@ -216,6 +246,11 @@ exprs -> expr ',' exprs : ['$1' | '$3'].
 
 guard -> exprs : ['$1'].
 guard -> exprs ';' guard : ['$1'|'$3'].
+
+% TODO : IF EXPRESSIONS
+% TODO : CASE EXPRESSIONS
+% TODO : RECEIVE EXPRESSIONS
+% TODO : TRY, TRY-CATCH EXPRESSIONS
 
 % atomic -> char : '$1'.
 atomic -> integer : '$1'.
@@ -256,11 +291,16 @@ list_op -> '--' : '$1'.
 comp_op -> '==' : '$1'.
 comp_op -> '/=' : '$1'.
 comp_op -> '=<' : '$1'.
+
+% TODO : lt, gt
+
 % comp_op -> '<' : '$1'.
 comp_op -> '>=' : '$1'.
 % comp_op -> '>' : '$1'.
 comp_op -> '=:=' : '$1'.
 comp_op -> '=/=' : '$1'.
+
+pipe_op -> '|>'  : '$1'.
 
 Erlang code.
 
@@ -280,7 +320,6 @@ Erlang code.
 
 
 build_function(Cs) ->
-	error_logger:info_msg("building function: ~p~n", [Cs]),
 	C1 = hd(Cs),
     Name = ?tokch(C1),
     Arity = length(element(4, C1)),

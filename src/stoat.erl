@@ -6,7 +6,7 @@
 -include_lib("stoat.hrl").
 
 
-show (Str) ->
+show (Str) -> 
 	?p("parsing: ~p~n", [Str]),
 	{ok, Tokens, _} = stoat_lex:string(Str),
 	?p("tokens: ~p~n", [Tokens]),
@@ -14,17 +14,24 @@ show (Str) ->
 	?p("parsed: ~p~n", [Parsed]),
 	Parsed.
 	
+-define(br, "\n\n").
 file_to_erl (Path) ->
-	file_to_erl(Path, filename:rootname(Path) ++ ".erl").
-file_to_erl (Path, OutPath) ->
 	{ok, Forms} = parse_file(Path),
-	Erl = [erl_prettypr:format(F) || F <- Forms],
-	file:write_file(OutPath, string:join(Erl, "\n\n")).
+	Rootname = filename:rootname(Path),	
+	misc:with_file(Rootname++".forms", fun (W) ->
+		[W(io_lib:format("~p~n~n", [F])) || F <- Forms] end),
+	Forms1 = proc_forms(Forms),
+	misc:with_file(Rootname++"1.forms", fun (W) ->
+		[W(io_lib:format("~p~n~n", [F])) || F <- Forms1] end),
+	misc:with_file(Rootname++".erl", fun (W) ->
+		[W(erl_prettypr:format(F) ++ ?br) || F <- Forms1] end),
+	ok.
 	
 parse_file (Path) ->
 	{ok, Bin} = file:read_file(Path),
 	Str = binary_to_list(Bin),
 	{ok, Toks, _} = stoat_lex:string(Str),
+	% error_logger:info_msg("tokens: ~p~n", [Toks]),
 	{ok, file_attrs(Path) ++  parse_toks(Toks)}.
 	
 parse_toks (Toks) -> parse_toks(Toks, {[], []}).
@@ -49,22 +56,8 @@ show_filex (Fnam) ->
 	{ok, Bin} = file:read_file(Fnam),
 	show(binary_to_list(Bin)).
 	
-% show_file (Fnam) ->
-% 	{ok, F} = file:open(Fnam, [read]),
-% 	Tokens = loop(F, []),
-% 	file:close(F),
-% 	?p("tokens: ~p~n", Tokens),
-% 	{ok, Parsed} = stoat_parse:parse(Tokens),
-% 	?p("parsed: ~p~n", [Parsed]),
-% 	Parsed.
-% 	
-% loop (F, Acc) ->
-% 	case io:request(F, {get_until, prompt, stoat_lex, token, [1]}) of
-% 		{ok, Tok, EndLine} ->
-% 			?p("got token: ~p~n", [Tok]),
-% 			loop(F, Acc++[Tok]);
-% 		{error, token} ->
-% 			exit(scanning_error);
-% 		{eof, _} ->
-% 			Acc
-% 	end.
+%%%%%%%%%%%%%%% 
+proc_forms (Forms) -> 
+	lists:foldl(fun(Mod, Acc) -> Mod:process_forms(Acc) end, Forms, [
+		stoat_pipes]).
+		
