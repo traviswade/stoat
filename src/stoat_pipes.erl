@@ -1,8 +1,12 @@
 -module(stoat_pipes).
 
--export([process_forms/1]).
+-export([process_forms/1, proc_pipe/1]).
 
 -import(erl_syntax, [type/1]).
+
+proc_pipe (In) -> 
+	error_logger:info_msg("processing pipe: ~p~n", [In]),
+	{atom, 1, c}.
 
 process_forms (Forms) ->
 	erl_syntax:revert_forms(do_transforms(erl_syntax:form_list(Forms))).

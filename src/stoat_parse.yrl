@@ -20,12 +20,14 @@ tuple
 atomic strings list tail 
 binary bin_elements bin_element bit_size_expr 
 bit_expr opt_bit_size_expr opt_bit_type_list bit_type bit_type_list
-add_op mult_op prefix_op list_op comp_op pipe_op.
+add_op mult_op prefix_op list_op comp_op 
+pipe pipe_op pipe_call pipe_calls pipe_bindings pipe_binding.
 
 Terminals
 char integer float atom string var
 '(' ')' ',' '->' '{' '}' '[' ']' '<-' ';' '|' '<<' '>>' ':' '!'
-'<=' '||' '=>' '&' '#' '.' '|>'
+'<=' '||' '=>' '&' '#' '.' 
+'|>' '|+' '|-' '|)' '|/' '|m' '|:' '~'
 '==' '=:=' '=/=' '<' '>' '>=' '=<' '/='
 '++' '--'
 '*' '/' 'div' 'rem' 'band' 'and' 'fn' 'end'
@@ -95,7 +97,7 @@ expr_600 -> prefix_op expr_650 : ?mkop1('$1', '$2').
 % expr_600 -> map_expr : '$1'.
 expr_600 -> expr_650 : '$1'.
 
-expr_650 -> expr_650 pipe_op expr_700 : ?mkop2('$1', '$2', '$3').
+expr_650 -> pipe : stoat_pipes:proc_pipe('$1').
 expr_650 -> expr_700 : '$1'.
 
 expr_700 -> function_call : '$1'.
@@ -226,7 +228,7 @@ fun_clause -> argument_list clause_guard fun_clause_body :
 fun_clause -> var argument_list clause_guard fun_clause_body :
 	{clause,element(2, '$1'),element(3, '$1'),element(1, '$2'),'$3','$4'}.
 	
-short_fun_clause -> '(' fun_argument_list '|' exprs ')':
+short_fun_clause -> '{' fun_argument_list '|' exprs '}':
 	{Args, Pos} = '$2',
 	{clause, Pos, 'fun', Args, [], '$4'}.
 	
@@ -300,7 +302,20 @@ comp_op -> '>=' : '$1'.
 comp_op -> '=:=' : '$1'.
 comp_op -> '=/=' : '$1'.
 
+pipe -> expr_700 pipe_calls : {'$1', '$2', ?line('$1')}.
+pipe_calls -> pipe_call : ['$1'].
+pipe_calls -> pipe_call pipe_calls : ['$1'|'$2'].
+pipe_call -> pipe_op expr_700 pipe_bindings : {'$1', '$2', '$3', ?line('$1')}.
 pipe_op -> '|>'  : '$1'.
+pipe_op -> '|+'  : '$1'.
+pipe_op -> '|-'  : '$1'.
+pipe_op -> '|)'  : '$1'.
+pipe_op -> '|/'  : '$1'.
+pipe_op -> '|m'  : '$1'.
+pipe_op -> '|:'  : '$1'.
+pipe_bindings -> '$empty' : [].
+pipe_bindings -> pipe_binding pipe_bindings : ['$1'|'$2'].
+pipe_binding -> '~' expr_700 : {'$2', ?line('$1')}.
 
 Erlang code.
 
