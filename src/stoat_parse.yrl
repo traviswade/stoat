@@ -97,7 +97,7 @@ expr_600 -> prefix_op expr_650 : ?mkop1('$1', '$2').
 % expr_600 -> map_expr : '$1'.
 expr_600 -> expr_650 : '$1'.
 
-expr_650 -> pipe : stoat_pipes:proc_pipe('$1').
+expr_650 -> pipe : stoat_pipes:transform('$1').
 expr_650 -> expr_700 : '$1'.
 
 expr_700 -> function_call : '$1'.

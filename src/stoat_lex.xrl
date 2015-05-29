@@ -15,7 +15,7 @@ Rules.
 "([^"\\]|\\.)*"       : {token, {string, TokenLine, strip(TokenChars, TokenLen)}}.
 
 \.               : {token, {dot, TokenLine}}.
-\|+              : {token, {list_to_atom(TokenChars), TokenLine}}.
+\|\+             : {token, {list_to_atom(TokenChars), TokenLine}}.
 \|-              : {token, {list_to_atom(TokenChars), TokenLine}}.
 \|>              : {token, {list_to_atom(TokenChars), TokenLine}}.
 \|\)             : {token, {list_to_atom(TokenChars), TokenLine}}.

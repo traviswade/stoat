@@ -57,7 +57,7 @@ show_filex (Fnam) ->
 	show(binary_to_list(Bin)).
 	
 %%%%%%%%%%%%%%% 
-proc_forms (Forms) -> 
-	lists:foldl(fun(Mod, Acc) -> Mod:process_forms(Acc) end, Forms, [
-		stoat_pipes]).
+proc_forms (Forms) -> Forms.
+	% lists:foldl(fun(Mod, Acc) -> Mod:process_forms(Acc) end, Forms, [
+	% 	stoat_pipes]).
 		
