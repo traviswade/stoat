@@ -56,6 +56,11 @@ show_filex (Fnam) ->
 	{ok, Bin} = file:read_file(Fnam),
 	show(binary_to_list(Bin)).
 	
+str2expr (Str) ->
+	{ok, Toks, _} = erl_scan:string(Str ++ "."),
+	{ok, [Expr]} = erl_parse:parse_exprs(Toks),
+	Expr.
+	
 %%%%%%%%%%%%%%% 
 proc_forms (Forms) -> Forms.
 	% lists:foldl(fun(Mod, Acc) -> Mod:process_forms(Acc) end, Forms, [

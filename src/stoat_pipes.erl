@@ -4,52 +4,56 @@
 
 -import(erl_syntax, [type/1]).
 
--record(step, {wrappers=[], src, mod}).
--record(s, {wrappers=[], mod, steps=[]}).
+-record(step, {wrappers=[], src, mod, line}).
+-record(s, {wrappers=[], mod, steps=[], input}).
 
 -define(p(F, D), error_logger:info_msg(F, D)).
 
 transform ({Input, Steps, Line}=In) -> 
 	?p("processing pipe: ~p~n", [In]),
-	Steps1 = do_steps(Steps),
+	Steps1 = proc_steps(Steps, #s{input=Input}),
 	?p("bound: ~p~n", [Steps1]),
+	?p("which equals : ~p~n", [erl_prettypr:format(Steps1)]),
 	{atom, 1, c}.
 	
-init_steps (Raw) -> [#step{src=Step} || Step <- Raw].
-	
-do_steps (Steps) -> do_steps(Steps, #s{}).
-% 	?p("steps: ~p~n", [Steps]),
-% 	add_wrappers(Steps, {[], []}).
+% '|>' '|+' '|-' '|)' '|/' '|m' '|:' '~'
+% todo : steps will be a nested array of chunks. we'll need another record field of the expressions so far
+proc_steps ([], #s{steps=Steps}=S) -> 
+	compose_call(S#s{steps=lists:reverse(Steps)});
 
- % '|>' '|+' '|-' '|)' '|/' '|m' '|:' '~'
+% NOTE THAT WE ONLY ACTUALLY ALLOW ONE WRAPPER. THIS MAY CHANGE, AND DO_CALL WILL NEED TO BE UPDATED
+proc_steps ([{{'|+', _}, Wrapper, [], _L}|T], Acc) ->
+	proc_steps(T, Acc#s{wrappers=[Wrapper]});
+	
+proc_steps ([{{'|-',_}, {_,_,ToRemove}, [], _L}|T], #s{wrappers=[{_,_,ToRemove}]}=Acc) ->
+	proc_steps(T, Acc#s{wrappers=[]});
+proc_steps ([{{'|-', _}, _, _, _}|T], Acc) ->
+	proc_steps(T, Acc);
+	
+proc_steps ([{{'|m', _}, Mod, [], _L}|T], Acc) ->
+	proc_steps(T, Acc#s{mod=Mod});
+	
+proc_steps ([{{'|>', L}, F, [], _L}|T], #s{steps=Steps, wrappers=W}=Acc) ->	
+	proc_steps(T, Acc#s{steps=[#step{wrappers=W, src=F, line=L}|Steps]});
+	
+proc_steps ([{{'|)', L}, F, [], _L}|T], #s{steps=Steps}=Acc) ->
+	proc_steps(T, Acc#s{steps=[#step{src=F, wrappers=[], line=L}|Steps]});
+	
+proc_steps ([{{'|/', L}, F, [], _L}|T], #s{steps=Steps}=Acc) ->
+	proc_steps(T, Acc#s{steps=[#step{src={tap,F}, line=L}|Steps]}).
 
-do_steps ([], #s{steps=Steps}) -> lists:reverse(Steps);
+compose_call (#s{steps=[], input=Input}) -> Input;
+compose_call (#s{steps=[H|T], input=Input}=S) -> 
+	compose_call(S#s{steps=T, input=do_call(H, Input)}).
+	
+do_call (#step{src={tap, F}, line=L}, Input) ->
+	Arg = {var, L, 'Arg'},
+	Fun = {'fun', L, {clauses, [{clause, L, [Arg], [], [{call, L, F, [Arg]}, Arg]}]}},
+	{call, L, Fun, [Input]};
 
-do_steps ([{{'|+', _}, Wrapper, [], _Line}|T], #s{wrappers=W}=Acc) ->
-	do_steps(T, Acc#s{wrappers=[Wrapper|W]});
+do_call (#step{src=F, line=L, wrappers=[]}, Input) ->
+	{call, L, F, [Input]};
 	
-do_steps ([{{'|-', _}, Wrapper, [], _Line}|T], #s{wrappers=W}=Acc) ->
-	do_steps(T, Acc#s{wrappers=W--[Wrapper]});
-	
-do_steps ([{{'|m', _}, Mod, [], _Line}|T], Acc) ->
-	do_steps(T, Acc#s{mod=Mod});
-	
-do_steps ([{{'|>', _}, F, [], _Line}|T], #s{steps=Steps, wrappers=W}=Acc) ->	
-	do_steps(T, Acc#s{steps=[#step{wrappers=W, src=F}|Steps]});
-	
-do_steps ([{{'|)', _}, F, [], _Line}|T], #s{steps=Steps}=Acc) ->
-	do_steps(T, Acc#s{steps=[#step{src=F}|Steps]});
-	
-do_steps ([{{'|/', _}, F, [], _Line}|T], #s{steps=Steps}=Acc) ->
-	do_steps(T, Acc#s{steps=[#step{src={tap,F}}|Steps]}).
-
-% add_wrappers ([], {_, AccS}) -> lists:reverse(AccS);
-% add_wrappers ([#step{src={{'|+',_},W,[],_Line}}|T], {AccW, AccS}) ->
-% 	add_wrappers(T, {[B|AccB], AccS});
-% add_wrappers ([#step{src={{'|-',_},W,[],_Line}}|T], {AccW, AccS}) ->
-% 	add_wrappers(T, {AccW--[W], AccS});
-% add_wrappers ([S|T], {AccW, AccS}) ->
-% 	add_wrappers(T, {AccW, [S#step{binders=AccW}|AccS]}).
-% 
-
+do_call (#step{src=F, wrappers=[W], line=L}, Input) ->
+	{call, L, W, [F, Input]}.
 

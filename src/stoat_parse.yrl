@@ -104,7 +104,7 @@ expr_700 -> function_call : '$1'.
 expr_700 -> record_expr : '$1'.
 expr_700 -> expr_800 : '$1'.
 
-% expr_800 -> expr_max ':' expr_max : {remote,?line('$2'),'$1','$3'}.
+expr_800 -> expr_max ':' expr_max : {remote,?line('$2'),'$1','$3'}.
 expr_800 -> expr_max : '$1'.
 
 expr_max -> var : '$1'.
