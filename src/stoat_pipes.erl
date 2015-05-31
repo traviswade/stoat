@@ -4,7 +4,7 @@
 
 -import(erl_syntax, [type/1]).
 
--record(step, {wrappers=[], src, mod, line, bind}).
+-record(step, {wrappers=[], src, mod, line, bind=[]}).
 -record(s, {wrappers=[], mod, steps=[], exprs}).
 
 -define(p(F, D), error_logger:info_msg(F, D)).
@@ -13,13 +13,10 @@ transform ({Input, Steps, Line}=In) -> proc_steps(Steps, #s{exprs=[Input]}).
 	
 % '|>' '|+' '|-' '|)' '|/' '|m' '|:' '~'
 
-
-% todo : steps will be a nested array of chunks. we'll need another record field of the expressions so far
 proc_steps ([], #s{steps=Steps}=S) -> 
-?p("found the end: ~p~n", [S#s.exprs]),
 	compose_call(S#s{steps=lists:reverse(Steps)});
 
-% NOTE THAT WE ONLY ACTUALLY ALLOW ONE WRAPPER. THIS MAY CHANGE, AND DO_CALL WILL NEED TO BE UPDATED
+% NOTE THAT WE CURRENTLY ONLY ALLOW ONE WRAPPER. THIS MAY CHANGE, AND DO_CALL WILL NEED TO BE UPDATED
 proc_steps ([{{'|+', _}, Wrapper, [], _L}|T], Acc) ->
 	proc_steps(T, Acc#s{wrappers=[Wrapper]});
 	
@@ -45,8 +42,16 @@ compose_call (#s{steps=[H|T], exprs=[Input|Texp]}=S) ->
 	Call = do_call(H, Input),
 	compose_call(S#s{steps=T, exprs=case H#step.bind of
 		[] -> [Call|Texp];
-		Bindings -> [Call|Texp] % TODO! do the assignment
+		[{Var, Line}|_] = Binding ->
+			Assignment = do_match(Line, [Call|Binding]), %{match, Line, Var, Call},
+			[Var, Assignment|Texp]
 	end}).
+	
+do_match (_, [Val])      ->  check_binding(Val);
+do_match (Line, [Val|T]) ->  {match, Line, check_binding(Val), do_match(Line, T)}.
+
+check_binding ({{var, _, _}=Val, _}) -> Val;
+check_binding (Val) -> Val.
 	
 do_call (#step{src={tap, F}, line=L}, Input) ->
 	Arg = {var, L, 'Arg'},
