@@ -4,7 +4,7 @@
 
 funs1 () -> ok.
 
-funs2 () -> ok.
+funs2 () -> not_ok.
 
 funs3 () -> ok.
 

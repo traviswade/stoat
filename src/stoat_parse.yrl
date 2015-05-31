@@ -198,14 +198,15 @@ record_field -> atom '=' expr : {record_field,?line('$1'),'$1','$3'}.
 
 
 
-function_call -> expr_800 argument_list : {call,?line('$1'),'$1',element(1, '$2')}.
+function_call -> expr_800 argument_list : 
+	stoat_cuts:transform({call,?line('$1'),'$1',element(1, '$2')}).
 
 fun_expr -> atom '/' integer :
 	{'fun',?line('$1'),{function,element(3, '$1'),element(3, '$3')}}.
 fun_expr -> 'fn' atom_or_var ':' atom_or_var '/' integer_or_var :
 	{'fun',?line('$1'),{function,'$2','$4','$6'}}.
-fun_expr -> atom ':' atom '/' integer :
-	{'fun',?line('$1'),{function,'$1','$3','$5'}}.
+% fun_expr -> atom ':' atom '/' integer :
+% 	{'fun',?line('$1'),{function,'$1','$3','$5'}}.
 fun_expr -> short_fun_clause : build_fun(?line('$1'), ['$1']).
 fun_expr -> 'fn' fun_clauses 'end' : build_fun(?line('$1'), '$2').
 
@@ -243,8 +244,10 @@ fun_argument_list -> '$empty' : {[], 0}.
 argument_list -> '(' ')' : {[],?line('$1')}.
 argument_list -> '(' exprs ')' : {'$2',?line('$1')}.
 
-exprs -> expr : ['$1'].
-exprs -> expr ',' exprs : ['$1' | '$3'].
+% the flattening is necessary because we break up an "expression"
+% when binding values during pipes. keep an eye on this.
+exprs -> expr : lists:flatten(['$1']).
+exprs -> expr ',' exprs : lists:flatten(['$1' | '$3']).
 
 guard -> exprs : ['$1'].
 guard -> exprs ';' guard : ['$1'|'$3'].
