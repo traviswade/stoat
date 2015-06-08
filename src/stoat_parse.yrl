@@ -27,7 +27,7 @@ Terminals
 char integer float atom string var
 '(' ')' ',' '->' '{' '}' '[' ']' '<-' ';' '|' '<<' '>>' ':' '!'
 '<=' '||' '=>' '&' '#' '.' 
-'|>' '|+' '|-' '|)' '|/' '|m' '|:' '~'
+'|>' '|+' '|-' '|)' '|/' '|m' '|:' '~' '|{'
 '==' '=:=' '=/=' '<' '>' '>=' '=<' '/='
 '++' '--'
 '*' '/' 'div' 'rem' 'band' 'and' 'fn' 'end'
@@ -207,8 +207,9 @@ fun_expr -> 'fn' atom_or_var ':' atom_or_var '/' integer_or_var :
 	{'fun',?line('$1'),{function,'$2','$4','$6'}}.
 % fun_expr -> atom ':' atom '/' integer :
 % 	{'fun',?line('$1'),{function,'$1','$3','$5'}}.
-fun_expr -> short_fun_clause : build_fun(?line('$1'), ['$1']).
-fun_expr -> 'fn' fun_clauses 'end' : build_fun(?line('$1'), '$2').
+% fun_expr -> short_fun_clause '}' : build_fun(?line('$1'), ['$1']).
+fun_expr -> '{' fun_clauses '}' : build_fun(?line('$1'), '$2').
+
 
 atom_or_var -> atom : '$1'.
 atom_or_var -> var : '$1'.
@@ -216,27 +217,19 @@ atom_or_var -> var : '$1'.
 integer_or_var -> integer : '$1'.
 integer_or_var -> var : '$1'.
 
-% short_fun_clauses -> short_fun_clause : ['$1'].
-% short_fun_clauses -> short_fun_clause ';' short_fun_clauses : ['$1' | '$3'].
-
 fun_clauses -> fun_clause : ['$1'].
 fun_clauses -> fun_clause ';' fun_clauses : ['$1' | '$3'].
 
-fun_clause -> argument_list clause_guard fun_clause_body :
+fun_clause -> fun_argument_list clause_guard fun_clause_body :
 	{Args,Pos} = '$1',
 	{clause,Pos,'fun',Args,'$2','$3'}.
 		
 fun_clause -> var argument_list clause_guard fun_clause_body :
 	{clause,element(2, '$1'),element(3, '$1'),element(1, '$2'),'$3','$4'}.
 	
-short_fun_clause -> '{' fun_argument_list '|' exprs '}':
-	{Args, Pos} = '$2',
-	{clause, Pos, 'fun', Args, [], '$4'}.
+fun_clause_body -> '|' exprs: '$2'.
 	
-fun_clause_body -> '->' exprs: '$2'.
-	
-% fun_argument_list -> '<' '>' : {[],?line('$1')}.
-% fun_argument_list -> '<' exprs '>' : {'$2',?line('$1')}.
+
 fun_argument_list -> exprs : {'$1', 0}.
 fun_argument_list -> '$empty' : {[], 0}.
 
@@ -309,6 +302,10 @@ pipe -> expr_700 pipe_calls : {'$1', '$2', ?line('$1')}.
 pipe_calls -> pipe_call : ['$1'].
 pipe_calls -> pipe_call pipe_calls : ['$1'|'$2'].
 pipe_call -> pipe_op expr_700 pipe_bindings : {'$1', '$2', '$3', ?line('$1')}.
+
+% |{ is sugar for |> {
+pipe_call -> '|{' fun_clauses '}' : {{'|>', ?line('$1')}, build_fun(?line('$1'), '$2'), [], ?line('$1')}.
+
 pipe_op -> '|>'  : '$1'.
 pipe_op -> '|+'  : '$1'.
 pipe_op -> '|-'  : '$1'.

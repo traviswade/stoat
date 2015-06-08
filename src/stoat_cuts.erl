@@ -4,14 +4,11 @@
 
 -define(p(X), error_logger:info_msg("~p~n", X)).
 
-
 transform ({call, L, Op, Args}=In) ->
-	?p({"transforming", L, Op, Args}),
 	case check_args(Args) of
 		{[], _} -> 
 			In;
 		{Missing, Args1} ->
-			?p({cutting, {'fun', L, {clauses, [{clause, L, Missing, [], [{call, L, Op, Args1}]}]}}}),
 			{'fun', L, {clauses, [{clause, L, Missing, [], [{call, L, Op, Args1}]}]}}
 	end.
 		

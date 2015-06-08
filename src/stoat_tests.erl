@@ -6,6 +6,9 @@
 
 
 
-file_test () -> ?assertEqual(ok, stoat:file_to_erl("../test/one.stoat")).
+file_test () -> 
+	?assertEqual(ok, stoat:file_to_erl("../test/pipes.stoat")).
+	% ?assertEqual(ok, stoat:file_to_erl("../test/pipes.stoat")).
 	
+
 
