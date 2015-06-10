@@ -3,6 +3,8 @@
 -export([funs1/0, funs2/0, if1/0, if2/0, if3/0, if4/0, if5/0, if6/0, if7/0, if8/0, if9/0, if10/0, if11/0,
 pipes1/0, pipes2/0]).
 
+-export([typ1/0, typ2/0, typ3/0, typ4/0, typ5/0]).
+
 -export([t/2, t/1]).
 
 funs1 () -> 
@@ -11,6 +13,25 @@ funs1 () ->
 funs2 () -> 
 	fun (L) -> length(L) end ([]).
 	
+typ1 () -> typ1(1).
+typ2 () -> typ2(1).
+typ3 () -> typ3(1).
+typ4 () -> typ4(1).
+typ5 () -> typ5(1).
+
+typ1 (X) when is_integer(X) -> ok;
+typ1 (_) -> bad.
+
+typ2 (X) -> case X of
+	Val when is_integer(Val) -> ok;
+	_ -> bad
+end.
+
+typ3 (X) -> if is_integer(X) -> ok; true -> bad end.
+
+typ4 (X) -> case is_integer(X) of true -> ok; _ -> bad end.
+
+typ5 (_) -> ok.
 	
 pipes1 () ->
 	A = outf(1),

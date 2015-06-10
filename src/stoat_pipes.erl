@@ -39,10 +39,16 @@ proc_steps ([{{'|/', L}, F, [], _L}|T], #s{steps=Steps}=Acc) ->
 	proc_steps(T, Acc#s{steps=[#step{src={tap,F}, line=L}|Steps]}).
 
 compose_call (#s{steps=[], exprs=Exprs}) -> lists:reverse(Exprs);
+
+% TODO. check for steps that are a fun, apply them in place. won't currently work with wrappers
+% X |> double |> fun(X)->X+1 end |> triple.
+% triple( fun(X)->X+1 end( double( X ) ) ).
+% V1 = double(X) + 1, triple(V).
+% compose_call (#s{steps[#step{src={'fun',_,_}}|T], wrappers=[]}, exprs=[Input|Texp]) ->
+
 compose_call (#s{steps=[H|T], exprs=[Input|Texp]}=S) -> 
-	H1 = inline_fun(H),
-	Call = do_call(H1, Input),
-	compose_call(S#s{steps=T, exprs=case H1#step.bind of
+	Call = do_call(H, Input),
+	compose_call(S#s{steps=T, exprs=case H#step.bind of
 		[] -> [Call|Texp];
 		[{Var, Line}|_] = Binding ->
 			Assignment = do_match(Line, lists:reverse([Call|Binding])), %{match, Line, Var, Call},
@@ -82,14 +88,6 @@ wrap_op ({remote, L, M, F}=Call) ->
 wrap_op (Op) ->
 	error_logger:info_msg("wrapping op: ~p~n", [Op]), Op.
 
-
-
-% optimizations -----------------------
-
-inline_fun (#step{src={'fun',L,{clauses,[{clause,_,[{var,_,VarNam}],[],[Expr]}]}},bind=B}=S) ->
-	S;
-	
-inline_fun (S) -> S.
 
 
 

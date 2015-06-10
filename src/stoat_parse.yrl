@@ -12,7 +12,7 @@ fun_argument_list
 short_fun_clause
 atom_or_var integer_or_var
 function function_clauses function_clause function_name
-argument_list
+argument_list arg_exprs arg_expr arg_guards
 clause_args clause_guard clause_body
 guard
 function_call
@@ -28,6 +28,7 @@ char integer float atom string var
 '(' ')' ',' '->' '{' '}' '[' ']' '<-' ';' '|' '<<' '>>' ':' '!'
 '<=' '||' '=>' '&' '#' '.' 
 '|>' '|+' '|-' '|)' '|/' '|m' '|:' '~' '|{'
+'::'
 '==' '=:=' '=/=' '<' '>' '>=' '=<' '/='
 '++' '--'
 '*' '/' 'div' 'rem' 'band' 'and' 'fn' 'end'
@@ -230,7 +231,7 @@ fun_clause -> var argument_list clause_guard fun_clause_body :
 fun_clause_body -> '|' exprs: '$2'.
 	
 
-fun_argument_list -> exprs : {'$1', 0}.
+fun_argument_list -> arg_exprs : {'$1', 0}.
 fun_argument_list -> '$empty' : {[], 0}.
 
 
@@ -242,11 +243,18 @@ argument_list -> '(' exprs ')' : {'$2',?line('$1')}.
 exprs -> expr : lists:flatten(['$1']).
 exprs -> expr ',' exprs : lists:flatten(['$1' | '$3']).
 
+arg_exprs -> arg_expr : lists:flatten([element(1, '$1')]).
+arg_exprs -> arg_expr ',' arg_exprs : lists:flatten(['$1'|'$3']).
+
+arg_expr -> expr arg_guards : {'$1', '$2'}.
+arg_guards -> '$empty' : [].
+arg_guards -> '::' '(' exprs ')' : '$3'.
+
 guard -> exprs : ['$1'].
 guard -> exprs ';' guard : ['$1'|'$3'].
 
 % TODO : IF EXPRESSIONS
-% TODO : CASE EXPRESSIONS
+% TODO : CASE EXPRESSIONS  -- covered by case funs
 % TODO : RECEIVE EXPRESSIONS
 % TODO : TRY, TRY-CATCH EXPRESSIONS
 
@@ -290,11 +298,9 @@ comp_op -> '==' : '$1'.
 comp_op -> '/=' : '$1'.
 comp_op -> '=<' : '$1'.
 
-% TODO : lt, gt
-
-% comp_op -> '<' : '$1'.
+comp_op -> '<' : '$1'.
 comp_op -> '>=' : '$1'.
-% comp_op -> '>' : '$1'.
+comp_op -> '>' : '$1'.
 comp_op -> '=:=' : '$1'.
 comp_op -> '=/=' : '$1'.
 
@@ -341,15 +347,22 @@ build_function(Cs) ->
     {function, ?line(C1), Name, Arity, check_clauses(Cs, Name, Arity)}.
 
 build_fun(Line, Cs) ->
-    Name = ?tokch(hd(Cs)),
-    Arity = length(element(4, hd(Cs))),
-    CheckedCs = check_clauses(Cs, Name, Arity),
+	Clauses = Cs, %check_arg_guards(Cs),
+	?p("trying to build fun : ~p~n", [Clauses]),
+    Name = ?tokch(hd(Clauses)),
+    Arity = length(element(4, hd(Clauses))),
+    CheckedCs = check_clauses(Clauses, Name, Arity),
     case Name of
         'fun' ->
             {'fun',Line,{clauses,CheckedCs}};
         Name ->
             {named_fun,Line,Name,CheckedCs}
     end.
+
+check_arg_guards ({clause, Ln, Args, Guards, Body}) ->
+	{clause, Ln, [A || {A,_} <- Args], Guards, Body};
+check_arg_guards (RawClauses) ->
+	[check_arg_guards(C) || C <- RawClauses].
 
 check_clauses(Cs, Name, Arity) -> [check_clause(C, Name, Arity) || C <- Cs].
 

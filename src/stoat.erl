@@ -6,6 +6,19 @@
 -include_lib("stoat.hrl").
 
 
+getline () ->
+	    case io:request({get_until, unicode, '-->>', scanny, tokens, [1]}) of
+		{ok, Toks, EndPos} ->
+			error_logger:error_msg("something: ~p~n", [Toks]),
+		    case stoat_parse:parse(Toks) of
+		    	{ok,Exprs} -> {ok,Exprs,EndPos};
+		    	{error,E} -> {error,E,EndPos}
+		     end;
+		Other ->
+			error_logger:error_msg("other: ~p~n", [Other]),
+		    Other
+	    end.
+
 show (Str) -> 
 	?p("parsing: ~p~n", [Str]),
 	{ok, Tokens, _} = stoat_lex:string(Str),
