@@ -223,7 +223,9 @@ fun_clauses -> fun_clause ';' fun_clauses : ['$1' | '$3'].
 
 fun_clause -> fun_argument_list clause_guard fun_clause_body :
 	{Args,Pos} = '$1',
-	{clause,Pos,'fun',Args,'$2','$3'}.
+	% note the empty clause guard is completely ignored for now
+	{Args1, Guards} = compose_guards(Args),
+	{clause,Pos,'fun',Args1, Guards,'$3'}.
 		
 fun_clause -> var argument_list clause_guard fun_clause_body :
 	{clause,element(2, '$1'),element(3, '$1'),element(1, '$2'),'$3','$4'}.
@@ -243,11 +245,12 @@ argument_list -> '(' exprs ')' : {'$2',?line('$1')}.
 exprs -> expr : lists:flatten(['$1']).
 exprs -> expr ',' exprs : lists:flatten(['$1' | '$3']).
 
-arg_exprs -> arg_expr : lists:flatten([element(1, '$1')]).
+arg_exprs -> arg_expr : lists:flatten(['$1']).
 arg_exprs -> arg_expr ',' arg_exprs : lists:flatten(['$1'|'$3']).
 
 arg_expr -> expr arg_guards : {'$1', '$2'}.
 arg_guards -> '$empty' : [].
+arg_guards -> '::' atom : ['$2'].
 arg_guards -> '::' '(' exprs ')' : '$3'.
 
 guard -> exprs : ['$1'].
@@ -359,10 +362,20 @@ build_fun(Line, Cs) ->
             {named_fun,Line,Name,CheckedCs}
     end.
 
-check_arg_guards ({clause, Ln, Args, Guards, Body}) ->
-	{clause, Ln, [A || {A,_} <- Args], Guards, Body};
-check_arg_guards (RawClauses) ->
-	[check_arg_guards(C) || C <- RawClauses].
+% guards is always empty for now. we will probably never use
+% them in that position so we could just clean them out.
+compose_guards (GuardedArgs) ->
+	compose_guards (GuardedArgs, {[], []}).
+	
+compose_guards ([], {Args, Guards}) -> {lists:reverse(Args), lists:reverse(Guards)};
+compose_guards ([{Arg, GuardSpecs}|T], {AccArgs, AccGuards}) ->
+	compose_guards (T, {[Arg|AccArgs], [proc_guard(Arg, G) || G <- GuardSpecs] ++ AccGuards}).
+	% compose_guards(T, {[Arg|AccArgs], []}).
+	
+proc_guard (Arg, {atom, Line, Atom}) ->
+	F = list_to_atom("is_" ++ atom_to_list(Atom)),
+	{call,Line,{atom, Line, F},[{var,Line,stoat_cuts:find_var(Arg)}]}.
+
 
 check_clauses(Cs, Name, Arity) -> [check_clause(C, Name, Arity) || C <- Cs].
 
