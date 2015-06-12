@@ -86,7 +86,8 @@ wrap_op ({remote, L, M, F}=Call) ->
 	Arg = {var, L, 'Arg__'},
 	{'fun', L, {clauses, [{clause, L, [Arg], [], [{call, L, Call, [Arg]}]}]}};
 wrap_op (Op) ->
-	error_logger:info_msg("wrapping op: ~p~n", [Op]), Op.
+	% error_logger:info_msg("wrapping op: ~p~n", [Op]), 
+	Op.
 
 
 

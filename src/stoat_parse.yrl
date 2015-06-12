@@ -36,8 +36,6 @@ char integer float atom string var
 '+' '-' 'bor' 'bxor' 'bsl' 'bsr' 'or' 'xor' 'bnot' 'not'
 '='
 'when'
-
-
 dot.
 
 Rootsymbol form.
@@ -224,7 +222,7 @@ fun_clauses -> fun_clause ';' fun_clauses : ['$1' | '$3'].
 fun_clause -> fun_argument_list clause_guard fun_clause_body :
 	{Args,Pos} = '$1',
 	% note the empty clause guard is completely ignored for now
-	{Args1, Guards} = compose_guards(Args),
+	{Args1, Guards} = stoat_guards:compose_guards(Args),
 	{clause,Pos,'fun',Args1, Guards,'$3'}.
 		
 fun_clause -> var argument_list clause_guard fun_clause_body :
@@ -342,6 +340,17 @@ Erlang code.
         end).
 -define(p, error_logger:info_msg).
 
+%%%%%%%%%%%%%%%%%%% API %%%%%%%%%%%
+-export([parse_expr/1]).
+parse_expr(Tokens) ->
+    case parse([{atom,0,f},{'(',0},{')',0},{'->',0}|Tokens]) of
+		{ok,{function,_Lf,f,0,[{clause,_Lc,[],[],[Expr]}]}} ->
+		    {ok,Expr};
+		{error,_} = Err -> Err;
+		{ok, Other} -> {error, notexpr, other}
+    end.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 build_function(Cs) ->
 	C1 = hd(Cs),
@@ -351,7 +360,6 @@ build_function(Cs) ->
 
 build_fun(Line, Cs) ->
 	Clauses = Cs, %check_arg_guards(Cs),
-	?p("trying to build fun : ~p~n", [Clauses]),
     Name = ?tokch(hd(Clauses)),
     Arity = length(element(4, hd(Clauses))),
     CheckedCs = check_clauses(Clauses, Name, Arity),
@@ -362,19 +370,7 @@ build_fun(Line, Cs) ->
             {named_fun,Line,Name,CheckedCs}
     end.
 
-% guards is always empty for now. we will probably never use
-% them in that position so we could just clean them out.
-compose_guards (GuardedArgs) ->
-	compose_guards (GuardedArgs, {[], []}).
-	
-compose_guards ([], {Args, Guards}) -> {lists:reverse(Args), lists:reverse(Guards)};
-compose_guards ([{Arg, GuardSpecs}|T], {AccArgs, AccGuards}) ->
-	compose_guards (T, {[Arg|AccArgs], [proc_guard(Arg, G) || G <- GuardSpecs] ++ AccGuards}).
-	% compose_guards(T, {[Arg|AccArgs], []}).
-	
-proc_guard (Arg, {atom, Line, Atom}) ->
-	F = list_to_atom("is_" ++ atom_to_list(Atom)),
-	{call,Line,{atom, Line, F},[{var,Line,stoat_cuts:find_var(Arg)}]}.
+
 
 
 check_clauses(Cs, Name, Arity) -> [check_clause(C, Name, Arity) || C <- Cs].
@@ -396,3 +392,5 @@ get_attribute(L, Name) ->
 show (Item) ->
 	?p("show: ~p", [Item]),
 	Item.
+	
+

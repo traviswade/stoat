@@ -5,15 +5,18 @@
 
 -include_lib("stoat.hrl").
 
+-define(p, error_logger:info_msg).
 
-getline () ->
-	    case io:request({get_until, unicode, '-->>', scanny, tokens, [1]}) of
-		{ok, Toks, EndPos} ->
-			error_logger:error_msg("something: ~p~n", [Toks]),
-		    case stoat_parse:parse(Toks) of
-		    	{ok,Exprs} -> {ok,Exprs,EndPos};
-		    	{error,E} -> {error,E,EndPos}
-		     end;
+
+get_expr () -> getline([], fun stoat_parse:parse_expr/1).
+get_forms () -> getline([], fun stoat_parse:parse/1).
+getline (Acc, F) ->
+	    case io:request({get_until, unicode, '-->>', stoat_lex, token, [1]}) of
+			{ok, {dot, Pos}, _} ->
+				Toks = lists:reverse([{dot, Pos}|Acc]),
+				F(Toks);
+			{ok, Tok, _} ->
+				getline([Tok|Acc], F);
 		Other ->
 			error_logger:error_msg("other: ~p~n", [Other]),
 		    Other
@@ -69,10 +72,6 @@ show_filex (Fnam) ->
 	{ok, Bin} = file:read_file(Fnam),
 	show(binary_to_list(Bin)).
 	
-str2expr (Str) ->
-	{ok, Toks, _} = erl_scan:string(Str ++ "."),
-	{ok, [Expr]} = erl_parse:parse_exprs(Toks),
-	Expr.
 	
 %%%%%%%%%%%%%%% 
 proc_forms (Forms) -> Forms.
