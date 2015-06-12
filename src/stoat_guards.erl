@@ -15,4 +15,9 @@ compose_guards ([{Arg, GuardSpecs}|T], {AccArgs, AccGuards}) ->
 	
 proc_guard (Arg, {atom, Line, Atom}) ->
 	F = list_to_atom("is_" ++ atom_to_list(Atom)),
-	{call,Line,{atom, Line, F},[{var,Line,stoat_cuts:find_var(Arg)}]}.
+	{call,Line,{atom, Line, F},[{var,Line,stoat_cuts:find_var(Arg)}]};
+proc_guard (Arg, Expr) ->
+	case stoat_cuts:replace_underscore(Arg, Expr) of
+		{true, Expr1} -> Expr1;
+		_ -> throw("bad guard expression")
+	end.

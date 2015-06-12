@@ -2,7 +2,7 @@
 
 -export([transform/1]).
 
--export([find_cut/1, find_var/1]).
+-export([find_cut/1, find_var/1, replace_underscore/2]).
 
 -define(p(X), error_logger:info_msg("~p~n", X)).
 
@@ -49,7 +49,8 @@ is_var ({var, _, V}) when is_atom(V) ->
 		_ -> {true, V}
 	end.
 
-
+replace_underscore ({var, _, Var}, Expr) ->
+	replace_underscore(Var, Expr);
 replace_underscore (Var, {cons, Line, H, T}=A) ->
 	case replace_underscore(Var, H) of
 		{true, H1} -> {true, {cons, Line, H1, T}};
