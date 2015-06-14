@@ -67,10 +67,27 @@ do_call (#step{src={tap, F}, line=L}, Input) ->
 	Fun = {'fun', L, {clauses, [{clause, L, [Arg], [], [{call, L, F, [Arg]}, Arg]}]}},
 	{call, L, Fun, [Input]};
 	
-do_call (#step{src=F, line=L, wrappers=[]}, Input) ->
-	{call, L, F, [Input]};
-	
+do_call (#step{src={remote, _,_,_}=Op, line=L, wrappers=[]}, Input) ->
+	?p({remote, Op,Input}),
+	{call, L, Op, [Input]};
+do_call (#step{src={atom, _,_}=Op, line=L, wrappers=[]}, Input) ->
+	?p({atp, Op,Input}),
+	{call, L, Op, [Input]};
+do_call (#step{src={var, _,_}=Op, line=L, wrappers=[]}, Input) ->
+	?p({var, Op, Input}),
+	{call, L, Op, [Input]};
+do_call (#step{src={'fun', _,_}=Op, line=L, wrappers=[]}, Input) ->
+	?p({'fun', op,Input}),
+	{call, L, Op, [Input]};
+do_call (#step{src=Expr, line=L, wrappers=[]}, Input) ->
+	?p({inexprclause, Expr,Input}),
+	case stoat_cuts:replace_underscore(Input, Expr) of
+		{true, Expr1} -> Expr1;
+		_             -> {call, L, Expr, [Input]}
+	end;
+
 do_call (#step{src=F, wrappers=[W], line=L}, Input) ->
+	?p({wrapperclause, F,Input}),
 	{call, L, W, [wrap_op(F), Input]}.
 	
 %  {remote,28,{atom,28,m},{atom,28,f1}}
@@ -82,12 +99,14 @@ do_call (#step{src=F, wrappers=[W], line=L}, Input) ->
   %          [{call,29,
   %               {remote,29,{atom,29,m},{atom,29,f2}},
   %               [{var,29,'X'}]}]}]}}
+
 wrap_op ({remote, L, M, F}=Call) ->
 	Arg = {var, L, 'Arg__'},
 	{'fun', L, {clauses, [{clause, L, [Arg], [], [{call, L, Call, [Arg]}]}]}};
-wrap_op (Op) ->
-	% error_logger:info_msg("wrapping op: ~p~n", [Op]), 
-	Op.
+wrap_op ({atom, _, _}=Op)   ->   Op;
+wrap_op ({'fun', _, _}=Op)  ->   Op;
+wrap_op ({var, _, _}=Op)    ->   Op;
+wrap_op (Op)                 ->   Op.
 
 
 

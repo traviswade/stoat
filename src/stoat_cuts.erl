@@ -6,6 +6,7 @@
 
 -define(p(X), error_logger:info_msg("~p~n", X)).
 
+
 transform ({call, L, Op, Args}=In) ->
 	case check_args(Args) of
 		{[], _} -> 
@@ -30,7 +31,9 @@ find_cut (Expr) -> ok.
 
 % find the (first-ish) variable in an argument
 % for example to use in a cut, and return the (atom) variale name
-find_var ({var, _, V}) -> V;
+find_var ({var, _, V}=Var) -> 
+	case is_var(Var) of {true, Var} -> Var; _ -> false
+	end;
 find_var ({cons, _, H, T}) ->
 	case is_var(H) of {true, V} -> V;_ -> find_var(T)
 	end;
@@ -43,14 +46,12 @@ find_var ([H|T]) ->
 	case is_var(H) of {true, V} -> V; _ -> find_var(T)
 	end.
 	
-is_var ({var, _, V}) when is_atom(V) -> 
+is_var ({var, _, V}=Var) when is_atom(V) -> 
 	case atom_to_list(V) of
 		"_"++_ -> false;
-		_ -> {true, V}
+		_ -> {true, Var}
 	end.
 
-replace_underscore ({var, _, Var}, Expr) ->
-	replace_underscore(Var, Expr);
 replace_underscore (Var, {cons, Line, H, T}=A) ->
 	case replace_underscore(Var, H) of
 		{true, H1} -> {true, {cons, Line, H1, T}};
@@ -87,7 +88,7 @@ replace_underscore (Var, {op, Line, Op, X, Y}=A) ->
 	end;
 replace_underscore (Var, {var, Line, A}) ->
 	case is__(A) of 
-		true -> {true, {var, Line, Var}};
+		true -> {true, Var}; % TODO: replace line in var with Line
 		_ -> {false, {var, Line, A}}
 	end;
 replace_underscore (_, X) -> {false, X}.
@@ -98,7 +99,7 @@ is__ (_) -> false.
 
 -include_lib("eunit/include/eunit.hrl").
 find_var_test () ->
-	F = fun(Str) -> find_var(stoat_util:str2expr(Str)) end,
+	F = fun(Str) -> {var, _, A} = find_var(stoat_util:str2expr(Str)), A end,
 	?assertEqual('A', F("A")),
 	?assertEqual('A', F("[A|_]")),
 	?assertEqual('A', F("[_|A]")),
@@ -107,7 +108,7 @@ find_var_test () ->
 	
 replace_underscore_test () ->
 	F1 = fun(Str) -> stoat_util:str2expr(Str) end,
-	F2 = fun(Str) -> replace_underscore('A', F1(Str)) end,
+	F2 = fun(Str) -> replace_underscore({var, 1, 'A'}, F1(Str)) end,
 	?assertEqual({true, F1("A>1")}, F2("_>1")),
 	?assertEqual({false, F1("A>1")}, F2("A>1")).
 

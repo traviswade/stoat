@@ -2,8 +2,8 @@
 
 Nonterminals
 form
-expr exprs expr_100 expr_150 expr_160 expr_200 expr_300 expr_400
-expr_500 expr_600 expr_650 expr_700 expr_800 expr_max
+expr exprs expr_100 expr_150 expr_160 expr_180 expr_200 expr_300 expr_400
+expr_500 expr_600 expr_700 expr_800 expr_max
 list_comprehension lc_expr lc_exprs
 binary_comprehension
 record_expr record_fields record_tuple record_field
@@ -15,7 +15,7 @@ function function_clauses function_clause function_name
 argument_list arg_exprs arg_expr arg_guards
 clause_args clause_guard clause_body
 guard
-function_call
+function_call call_argument_list
 tuple
 atomic strings list tail 
 binary bin_elements bin_element bit_size_expr 
@@ -44,14 +44,30 @@ form -> function dot : '$1'.
 
 function -> function_clauses : build_function('$1').
 
+
+% fun_clause -> fun_argument_list clause_guard fun_clause_body :
+% 	{Args,Pos} = '$1',
+% 	% note the empty clause guard is completely ignored for now
+% 	{Args1, Guards} = stoat_guards:compose_guards(Args),
+% 	{clause,Pos,'fun',Args1, Guards,'$3'}.
+
 function_clauses -> function_clause : ['$1'].
 function_clauses -> function_clause ';' function_clauses : ['$1'|'$3'].
 
 function_clause -> atom clause_args clause_guard clause_body : 
-	{clause, ?line('$1'), ?tokch('$1'), '$2', '$3', '$4'}.
+	{Args, Guards} = stoat_guards:compose_guards('$2'),
+	% ?p({gotguards, Guards}),
+	
+	
+	% TODO : why do the guards need to be wrapped in a list?
+	% are they different from fun guards?
+	
+	{clause, ?line('$1'), ?tokch('$1'), Args, [[G]||G<-Guards], '$4'}.
 % will fail in build_function in first position
 function_clause -> clause_args clause_guard clause_body :
-	{noname_clause, ?line(hd('$3')), noname, '$1', '$2', '$3'}.
+	{Args, Guards} = stoat_guards:compose_guards('$1'),
+	% ?p({gotguards, Guards}),
+	{noname_clause, ?line(hd('$3')), noname, Args, [[G]||G<-Guards], '$3'}.
 	
 	
 clause_args -> argument_list : element(1, '$1').
@@ -78,7 +94,10 @@ expr_150 -> expr_160 'orelse' expr_150 : ?mkop2('$1', '$2', '$3').
 expr_150 -> expr_160 : '$1'.
 
 expr_160 -> expr_200 'andalso' expr_160 : ?mkop2('$1', '$2', '$3').
-expr_160 -> expr_200 : '$1'.
+expr_160 -> expr_180 : '$1'.
+
+expr_180 -> pipe : stoat_pipes:transform('$1').
+expr_180 -> expr_200 : '$1'.
 
 expr_200 -> expr_300 comp_op expr_300 : ?mkop2('$1', '$2', '$3').
 expr_200 -> expr_300 : '$1'.
@@ -92,12 +111,13 @@ expr_400 -> expr_500 : '$1'.
 expr_500 -> expr_500 mult_op expr_600 : ?mkop2('$1', '$2', '$3').
 expr_500 -> expr_600 : '$1'.
 
-expr_600 -> prefix_op expr_650 : ?mkop1('$1', '$2').
+expr_600 -> prefix_op expr_700 : ?mkop1('$1', '$2').
 % expr_600 -> map_expr : '$1'.
-expr_600 -> expr_650 : '$1'.
+% expr_600 -> expr_650 : '$1'.
+expr_600 -> expr_700 : '$1'.
 
-expr_650 -> pipe : stoat_pipes:transform('$1').
-expr_650 -> expr_700 : '$1'.
+% expr_650 -> pipe : stoat_pipes:transform('$1').
+% expr_650 -> expr_700 : '$1'.
 
 expr_700 -> function_call : '$1'.
 expr_700 -> record_expr : '$1'.
@@ -197,8 +217,10 @@ record_field -> atom '=' expr : {record_field,?line('$1'),'$1','$3'}.
 
 
 
-function_call -> expr_800 argument_list : 
-	stoat_cuts:transform({call,?line('$1'),'$1',element(1, '$2')}).
+function_call -> expr_800 call_argument_list : 
+	% stoat_cuts:transform({call,?line('$1'),'$1',element(1, '$2')}).
+	% ?p("calling: ~p~n", ['$2']),
+	{call, ?line('$1'),'$1', element(1, '$2')}.
 
 fun_expr -> atom '/' integer :
 	{'fun',?line('$1'),{function,element(3, '$1'),element(3, '$3')}}.
@@ -234,9 +256,11 @@ fun_clause_body -> '|' exprs: '$2'.
 fun_argument_list -> arg_exprs : {'$1', 0}.
 fun_argument_list -> '$empty' : {[], 0}.
 
+call_argument_list -> '(' ')' : {[],?line('$1')}.
+call_argument_list -> '(' exprs ')' : {'$2',?line('$1')}.
 
 argument_list -> '(' ')' : {[],?line('$1')}.
-argument_list -> '(' exprs ')' : {'$2',?line('$1')}.
+argument_list -> '(' arg_exprs ')' : {'$2',?line('$1')}.
 
 % the flattening is necessary because we break up an "expression"
 % when binding values during pipes. keep an eye on this.
@@ -305,10 +329,10 @@ comp_op -> '>' : '$1'.
 comp_op -> '=:=' : '$1'.
 comp_op -> '=/=' : '$1'.
 
-pipe -> expr_700 pipe_calls : {'$1', '$2', ?line('$1')}.
+pipe -> expr_200 pipe_calls : {'$1', '$2', ?line('$1')}.
 pipe_calls -> pipe_call : ['$1'].
 pipe_calls -> pipe_call pipe_calls : ['$1'|'$2'].
-pipe_call -> pipe_op expr_700 pipe_bindings : {'$1', '$2', '$3', ?line('$1')}.
+pipe_call -> pipe_op expr_200 pipe_bindings : {'$1', '$2', '$3', ?line('$1')}.
 
 % |{ is sugar for |> {
 pipe_call -> '|{' fun_clauses '}' : {{'|>', ?line('$1')}, build_fun(?line('$1'), '$2'), [], ?line('$1')}.
