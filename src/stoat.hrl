@@ -1,3 +1,4 @@
 
--define(p(Arg, Fmt), error_logger:info_msg(Arg++"~n", [Fmt])).
--define(p(Arg), ?p(Arg, [])).
+% -define(p(Fmt, Args), error_logger:info_msg(Fmt++"~n", [Args])).
+% -define(p(Arg), ?p(Arg, [])).
+-define(p, error_logger:info_msg).

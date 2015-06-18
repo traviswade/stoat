@@ -56,9 +56,7 @@ function_clauses -> function_clause ';' function_clauses : ['$1'|'$3'].
 
 function_clause -> atom clause_args clause_guard clause_body : 
 	{Args, Guards} = stoat_guards:compose_guards('$2'),
-	% ?p({gotguards, Guards}),
-	
-	
+
 	% TODO : why do the guards need to be wrapped in a list?
 	% are they different from fun guards?
 	
@@ -66,8 +64,15 @@ function_clause -> atom clause_args clause_guard clause_body :
 % will fail in build_function in first position
 function_clause -> clause_args clause_guard clause_body :
 	{Args, Guards} = stoat_guards:compose_guards('$1'),
-	% ?p({gotguards, Guards}),
 	{noname_clause, ?line(hd('$3')), noname, Args, [[G]||G<-Guards], '$3'}.
+	
+	
+function_clause -> atom '-' pipe_calls : 
+	L = ?line('$1'),
+	Arg = {var, L, 'X__'},
+	Expr = stoat_pipes:transform({Arg, '$3', L}),
+	% flattening again. TODO: take care of this in the transform!
+	{clause, ?line('$1'), ?tokch('$1'), [Arg], [], lists:flatten(Expr)}.
 	
 	
 clause_args -> argument_list : element(1, '$1').

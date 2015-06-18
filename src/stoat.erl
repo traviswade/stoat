@@ -5,8 +5,6 @@
 
 -include_lib("stoat.hrl").
 
--define(p, error_logger:info_msg).
-
 
 get_expr () -> getline([], fun stoat_parse:parse_expr/1).
 get_forms () -> getline([], fun stoat_parse:parse/1).
@@ -47,7 +45,9 @@ parse_file (Path) ->
 	{ok, Bin} = file:read_file(Path),
 	Str = binary_to_list(Bin),
 	{ok, Toks, _} = stoat_lex:string(Str),
+	% ?p("toks: ~p~n", [Toks]),
 	% error_logger:info_msg("tokens: ~p~n", [Toks]),
+	
 	{ok, file_attrs(Path) ++  parse_toks(Toks)}.
 	
 parse_toks (Toks) -> parse_toks(Toks, {[], []}).
@@ -55,6 +55,7 @@ parse_toks ([], {[], AccForms}) -> parse_forms(AccForms);
 parse_toks ([{dot, _}=Dot|T], {AccForm, AccForms}) ->
 	parse_toks(T, {[], [lists:reverse([Dot|AccForm])|AccForms]});
 parse_toks ([H|T], {AccForm, AccForms}) ->
+	% ?p("parsing form: ~p~n~p~n~p~n888888888888888888~n~n", [H, AccForm, AccForms]),
 	parse_toks(T, {[H|AccForm], AccForms}).
 	
 parse_forms (ReversedForms) -> parse_forms(ReversedForms, []).

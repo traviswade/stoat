@@ -4,7 +4,6 @@
 
 -export([find_cut/1, find_var/1, replace_underscore/2]).
 
--define(p(X), error_logger:info_msg("~p~n", X)).
 
 
 transform ({call, L, Op, Args}=In) ->

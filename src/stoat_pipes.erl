@@ -3,13 +3,15 @@
 -export([transform/1]).
 
 -import(erl_syntax, [type/1]).
+-include_lib("stoat.hrl").
+
 
 -record(step, {wrappers=[], src, mod, line, bind=[]}).
 -record(s, {wrappers=[], mod, steps=[], exprs}).
 
--define(p, error_logger:info_msg).
 
-transform ({Input, Steps, Line}=In) -> proc_steps(Steps, #s{exprs=[Input]}).
+transform ({Input, Steps, Line}=In) -> 
+	proc_steps(Steps, #s{exprs=[Input]}).
 	
 % '|>' '|+' '|-' '|)' '|/' '|m' '|:' '~'
 % |{->}
@@ -63,31 +65,28 @@ check_binding ({{var, _, _}=Val, _}) -> Val;
 check_binding (Val) -> Val.
 	
 do_call (#step{src={tap, F}, line=L}, Input) ->
-	Arg = {var, L, 'Arg'},
+	Arg = {var, L, 'X__'},
 	Fun = {'fun', L, {clauses, [{clause, L, [Arg], [], [{call, L, F, [Arg]}, Arg]}]}},
 	{call, L, Fun, [Input]};
 	
 do_call (#step{src={remote, _,_,_}=Op, line=L, wrappers=[]}, Input) ->
-	?p({remote, Op,Input}),
 	{call, L, Op, [Input]};
 do_call (#step{src={atom, _,_}=Op, line=L, wrappers=[]}, Input) ->
-	?p({atp, Op,Input}),
 	{call, L, Op, [Input]};
 do_call (#step{src={var, _,_}=Op, line=L, wrappers=[]}, Input) ->
-	?p({var, Op, Input}),
-	{call, L, Op, [Input]};
+	case stoat_cuts:replace_underscore(Input, Op) of
+		{true, Expr1} -> Expr1;
+		_             -> {call, L, Op, [Input]}
+	end;
 do_call (#step{src={'fun', _,_}=Op, line=L, wrappers=[]}, Input) ->
-	?p({'fun', op,Input}),
 	{call, L, Op, [Input]};
 do_call (#step{src=Expr, line=L, wrappers=[]}, Input) ->
-	?p({inexprclause, Expr,Input}),
 	case stoat_cuts:replace_underscore(Input, Expr) of
 		{true, Expr1} -> Expr1;
 		_             -> {call, L, Expr, [Input]}
 	end;
 
 do_call (#step{src=F, wrappers=[W], line=L}, Input) ->
-	?p({wrapperclause, F,Input}),
 	{call, L, W, [wrap_op(F), Input]}.
 	
 %  {remote,28,{atom,28,m},{atom,28,f1}}
@@ -106,7 +105,7 @@ wrap_op ({remote, L, M, F}=Call) ->
 wrap_op ({atom, _, _}=Op)   ->   Op;
 wrap_op ({'fun', _, _}=Op)  ->   Op;
 wrap_op ({var, _, _}=Op)    ->   Op;
-wrap_op (Op)                 ->   Op.
+wrap_op (Op)                ->   Op.
 
 
 
