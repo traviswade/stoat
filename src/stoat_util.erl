@@ -1,6 +1,6 @@
 -module(stoat_util).
 
--export([str2expr/1, erlstr2expr/1, no_lines/1]) .
+-export([str2expr/1, erlstr2expr/1, no_lines/1, form2erl/1]).
 
 str2expr (Str) ->
 	{ok, Toks, _} = stoat_lex:string(Str ++ "."),
@@ -11,6 +11,10 @@ erlstr2expr (Str) ->
 	{ok, Toks, _} = erl_scan:string(Str ++ "."),
 	{ok, [Expr]} = erl_parse:parse_exprs(Toks),
 	Expr.
+	
+form2erl (F) -> try
+		erl_prettypr:format(F)
+	catch _:_ -> {error, badform, F} end.
 	
 	
 % without_lines (Forms) whe

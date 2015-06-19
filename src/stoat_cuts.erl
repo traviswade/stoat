@@ -59,6 +59,11 @@ replace_underscore (Var, {cons, Line, H, T}=A) ->
 			_ -> {false, A}
 		end
 	end;
+replace_underscore (Var, {tuple, Line, Elems}=T) ->
+	case replace_underscore(Var, Elems) of
+		{true, Elems1} -> {true, {tuple, Line, Elems1}};
+		_ -> {false, T}
+	end;
 replace_underscore (Var, {record_field, Line, Field, Val}=A) ->
 	case replace_underscore(Var, Val) of
 		{true, Val1} -> {true, {record_field, Line, Field, Val1}};

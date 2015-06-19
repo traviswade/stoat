@@ -56,15 +56,11 @@ function_clauses -> function_clause ';' function_clauses : ['$1'|'$3'].
 
 function_clause -> atom clause_args clause_guard clause_body : 
 	{Args, Guards} = stoat_guards:compose_guards('$2'),
-
-	% TODO : why do the guards need to be wrapped in a list?
-	% are they different from fun guards?
-	
-	{clause, ?line('$1'), ?tokch('$1'), Args, [[G]||G<-Guards], '$4'}.
+	{clause, ?line('$1'), ?tokch('$1'), Args, stoat_guards:maybe_wrap(Guards), '$4'}.
 % will fail in build_function in first position
 function_clause -> clause_args clause_guard clause_body :
 	{Args, Guards} = stoat_guards:compose_guards('$1'),
-	{noname_clause, ?line(hd('$3')), noname, Args, [[G]||G<-Guards], '$3'}.
+	{noname_clause, ?line(hd('$3')), noname, Args, stoat_guards:maybe_wrap(Guards), '$3'}.
 	
 	
 function_clause -> atom '-' pipe_calls : 

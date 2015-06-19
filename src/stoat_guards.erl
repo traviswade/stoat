@@ -1,17 +1,23 @@
 
 -module(stoat_guards).
 
--export([compose_guards/1]).
+-export([compose_guards/1, maybe_wrap/1]).
+-include_lib("stoat.hrl").
 
 % guards is always empty for now. we will probably never use
 % them in that position so we could just clean them out.
 compose_guards (GuardedArgs) ->
 	compose_guards (GuardedArgs, {[], []}).
 	
+% TODO: don't know what this is required for function clauses
+maybe_wrap ([]) -> [];
+maybe_wrap (Guards) -> [Guards].
+	
 % TODO : looks like guards are coming out backward.
-compose_guards ([], {Args, Guards}) -> {lists:reverse(Args), lists:reverse(Guards)};
+compose_guards ([], {Args, Guards}) -> 
+	{lists:reverse(Args), Guards};
 compose_guards ([{Arg, GuardSpecs}|T], {AccArgs, AccGuards}) ->
-	compose_guards (T, {[Arg|AccArgs], [proc_guard(Arg, G) || G <- GuardSpecs] ++ AccGuards}).
+	compose_guards (T, {[Arg|AccArgs], AccGuards ++ [proc_guard(Arg, G) || G <- GuardSpecs]}).
 	% compose_guards(T, {[Arg|AccArgs], []}).
 	
 proc_guard (Arg, {atom, Line, Atom}) ->
