@@ -17,11 +17,13 @@ test_example (Fil) ->
 	error_logger:info_msg("processing file: ~p~n", [Fil]),
 	{ok, Stoat} = stoat:parse_file(?relpth ++ "examples/stoat/" ++ Fil ++ ".st"),
 	{ok, Erl} = epp:parse_file(?relpth ++ "examples/erlang/" ++ Fil ++ ".erl", []),
-	Fs = [stoat_util:form2erl(F) || {function, _,_,_,_}=F <- Stoat],
-	Fe = [stoat_util:form2erl(F) || {function, _,_,_,_}=F <- Erl],
+	Fs = [{F, stoat_util:form2erl(F)} || {function, _,_,_,_}=F <- Stoat],
+	Fe = [{F, stoat_util:form2erl(F)} || {function, _,_,_,_}=F <- Erl],
 	% ?p("ok:: ST:~p~n~nERL:~p~n~n", [Stoat, Erl]),
-	lists:foreach(fun({A, B}) -> 
+	lists:foreach(fun({{Fa, A}, {Fb, B}}) -> 
 			case A of B -> ok; _ ->
-				error_logger:info_msg("~p ~nIS NOT~n ~p~n", [A, B]) end,
+					error_logger:info_msg("~p ~nIS NOT~n ~p~n", [A, B]),
+					error_logger:info_msg("~p ~nIS NOT~n ~p~n", [Fa, Fb])
+				end,
 			?assertEqual(A, B) 
 		end, lists:zip(Fs, Fe)).

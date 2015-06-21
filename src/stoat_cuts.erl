@@ -1,32 +1,31 @@
 -module(stoat_cuts).
 
--export([transform/1]).
+% -export([transform/1]).
 
--export([find_cut/1, find_var/1, replace_underscore/2]).
+-export([find_var/1, replace_underscore/2, expr2fun/1]).
 
 
-
-transform ({call, L, Op, Args}=In) ->
-	case check_args(Args) of
-		{[], _} -> 
-			In;
-		{Missing, Args1} ->
-			{'fun', L, {clauses, [{clause, L, Missing, [], [{call, L, Op, Args1}]}]}}
-	end.
-	
-check_args (Args) -> check_args(Args, {[], []}).
-
-check_args ([], {Missing, Args1}) -> 
-	{lists:reverse(Missing), lists:reverse(Args1)};
-	
-check_args ([{var, L, '_'}|T], {Missing, Args1}) ->
-	DummyArg = {var, L, list_to_atom("Arg__" ++ integer_to_list(length(Missing)))},
-	check_args(T, {[DummyArg|Missing], [DummyArg|Args1]});
-	
-check_args ([Arg|T], {Missing, Args1}) ->
-	check_args(T, {Missing, [Arg|Args1]}).
-	
-find_cut (Expr) -> ok.
+% transform ({call, L, Op, Args}=In) ->
+% 	case check_args(Args) of
+% 		{[], _} -> 
+% 			In;
+% 		{Missing, Args1} ->
+% 			{'fun', L, {clauses, [{clause, L, Missing, [], [{call, L, Op, Args1}]}]}}
+% 	end.
+% 	
+% check_args (Args) -> check_args(Args, {[], []}).
+% 
+% check_args ([], {Missing, Args1}) -> 
+% 	{lists:reverse(Missing), lists:reverse(Args1)};
+% 	
+% check_args ([{var, L, '_'}|T], {Missing, Args1}) ->
+% 	DummyArg = {var, L, list_to_atom("Arg__" ++ integer_to_list(length(Missing)))},
+% 	check_args(T, {[DummyArg|Missing], [DummyArg|Args1]});
+% 	
+% check_args ([Arg|T], {Missing, Args1}) ->
+% 	check_args(T, {Missing, [Arg|Args1]}).
+% 
+% find_cut (Expr) -> ok.
 
 % find the (first-ish) variable in an argument
 % for example to use in a cut, and return the (atom) variale name
@@ -49,6 +48,16 @@ is_var ({var, _, V}=Var) when is_atom(V) ->
 	case atom_to_list(V) of
 		"_"++_ -> false;
 		_ -> {true, Var}
+	end.
+	
+expr2fun (Expr) ->
+	L = stoat_util:line(Expr),
+	Var = {var, L, 'X__'},
+	case replace_underscore(Var, Expr) of
+		{true, Expr1} ->
+			{'fun', L, {clauses, [{clause, L, [Var], [], [Expr1]}]}};
+		_ ->
+			{'fun', L, {clauses, [{clause, L, [], [], [Expr]}]}}
 	end.
 
 replace_underscore (Var, {cons, Line, H, T}=A) ->
@@ -94,6 +103,14 @@ replace_underscore (Var, {var, Line, A}) ->
 	case is__(A) of 
 		true -> {true, Var}; % TODO: replace line in var with Line
 		_ -> {false, {var, Line, A}}
+	end;
+replace_underscore (Var, {call, L, Op, Args}=Call) ->
+	case replace_underscore(Var, Op) of
+		{true, Op1} -> {true, {call, L, Op1, Args}};
+		_ -> case replace_underscore(Var, Args) of
+			{true, Args1} -> {true, {call, L, Op, Args1}};
+			_ -> {false, Call}
+		end
 	end;
 replace_underscore (_, X) -> {false, X}.
 

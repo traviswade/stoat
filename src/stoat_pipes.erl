@@ -12,14 +12,12 @@
 
 transform ({Input, Steps, Line}=In) -> 
 	proc_steps(Steps, #s{exprs=[Input]}).
-	
-% '|>' '|+' '|-' '|)' '|/' '|m' '|:' '~'
-% |{->}
 
 proc_steps ([], #s{steps=Steps}=S) -> 
 	compose_call(S#s{steps=lists:reverse(Steps)});
 
-% NOTE THAT WE CURRENTLY ONLY ALLOW ONE WRAPPER. THIS MAY CHANGE, AND DO_CALL WILL NEED TO BE UPDATED
+% NOTE THAT WE CURRENTLY ONLY ALLOW ONE WRAPPER. THIS MAY CHANGE, 
+% BUT THAT IS NOT A GOOD REASON FOR IT TO BE WRAPPED IN A SILLY LIST NOW.
 proc_steps ([{{'|+', _}, Wrapper, [], _L}|T], Acc) ->
 	proc_steps(T, Acc#s{wrappers=[Wrapper]});
 	
@@ -28,14 +26,19 @@ proc_steps ([{{'|-',_}, {_,_,ToRemove}, [], _L}|T], #s{wrappers=[{_,_,ToRemove}]
 proc_steps ([{{'|-', _}, _, _, _}|T], Acc) ->
 	proc_steps(T, Acc);
 	
-proc_steps ([{{'|m', _}, Mod, [], _L}|T], Acc) ->
-	proc_steps(T, Acc#s{mod=Mod});
+proc_steps ([{{'|m', _}, {call, L, Mod, [Pos]}, [], _L}|T], Acc) ->
+	?p("adding module: ~p~n", [{Mod, Pos}]),
+	proc_steps(T, Acc#s{mod={Mod, Pos}});
+	
+proc_steps ([{{'|:', L}, Call, B, _L}|T], #s{steps=Steps, wrappers=W, mod=M}=Acc) ->
+	proc_steps(T, Acc#s{steps=[
+		#step{src={mod, M, Call}, line=L, wrappers=W, bind=B}|Steps]});
 	
 proc_steps ([{{'|>', L}, F, Bind, _L}|T], #s{steps=Steps, wrappers=W}=Acc) ->	
 	proc_steps(T, Acc#s{steps=[#step{wrappers=W, src=F, line=L, bind=Bind}|Steps]});
 	
 proc_steps ([{{'|)', L}, F, Bind, _L}|T], #s{steps=Steps}=Acc) ->
-	proc_steps(T, Acc#s{steps=[#step{src=F, wrappers=[], line=L, bind=Bind}|Steps]});
+	proc_steps(T, Acc#s{steps=[#step{src=F, line=L, bind=Bind}|Steps]});
 		
 proc_steps ([{{'|/', L}, F, [], _L}|T], #s{steps=Steps}=Acc) ->
 	proc_steps(T, Acc#s{steps=[#step{src={tap,F}, line=L}|Steps]}).
@@ -69,6 +72,19 @@ do_call (#step{src={tap, F}, line=L}, Input) ->
 	Fun = {'fun', L, {clauses, [{clause, L, [Arg], [], [{call, L, F, [Arg]}, Arg]}]}},
 	{call, L, Fun, [Input]};
 	
+do_call (#step{src={mod, {M, Pos}, Call}, line=L}=Step, Input) ->
+	case Call of
+		{atom, _, _}=F -> 
+			do_call(Step#step{src={remote, L, M, F}}, Input);
+		{call, _L, F, Args} ->
+			Pivot = case Pos of
+				{integer, _, N} -> N;
+				{op,_,'-',{integer,_,N}} -> length(Args)-N+1
+			end,
+			{Bef, Aft} = lists:split(Pivot, Args),
+			do_call(Step#step{src={
+				call, L, {remote, L, M, F}, Bef++[{var, L, '_'}]++Aft}}, Input)
+	end;
 do_call (#step{src={remote, _,_,_}=Op, line=L, wrappers=[]}, Input) ->
 	{call, L, Op, [Input]};
 do_call (#step{src={atom, _,_}=Op, line=L, wrappers=[]}, Input) ->
@@ -88,16 +104,6 @@ do_call (#step{src=Expr, line=L, wrappers=[]}, Input) ->
 
 do_call (#step{src=F, wrappers=[W], line=L}, Input) ->
 	{call, L, W, [wrap_op(F), Input]}.
-	
-%  {remote,28,{atom,28,m},{atom,28,f1}}
-% {'fun',0,
-  % {clauses,
-  %     [{clause,0,
-  %          [{var,29,'X'}],
-  %          [],
-  %          [{call,29,
-  %               {remote,29,{atom,29,m},{atom,29,f2}},
-  %               [{var,29,'X'}]}]}]}}
 
 wrap_op ({remote, L, M, F}=Call) ->
 	Arg = {var, L, 'Arg__'},

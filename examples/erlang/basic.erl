@@ -1,5 +1,6 @@
 -module(basic).
 -compile(export_all).
+-export([add/1]).
 
 const () -> k.
 

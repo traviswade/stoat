@@ -41,14 +41,23 @@ file_to_erl (Path) ->
 		[W(erl_prettypr:format(F) ++ ?br) || F <- Forms1] end),
 	ok.
 	
+-define(default_opts, #{outpath => "./"}).
+-define(suffix, ".st").
+-define(beam, ".beam").
+compile (Path) -> compile(Path, ?default_opts).
+compile (Path, Opts) ->
+	{ok, Forms} = parse_file(Path),
+	{ok, Mod, Bin} = compile:forms(Forms),
+	stoat_util:write_file([maps:get(outpath, Opts), atom_to_list(Mod), ?beam], Bin).
+
 parse_file (Path) ->
 	{ok, Bin} = file:read_file(Path),
 	Str = binary_to_list(Bin),
-	{ok, Toks, _} = stoat_lex:string(Str),
+	{ok, Toks, Eof} = stoat_lex:string(Str),
 	% ?p("toks: ~p~n", [Toks]),
 	% error_logger:info_msg("tokens: ~p~n", [Toks]),
 	
-	{ok, file_attrs(Path) ++  parse_toks(Toks)}.
+	{ok, file_attrs(Path) ++  parse_toks(Toks) ++ [{eof, Eof}]}.
 	
 parse_toks (Toks) -> parse_toks(Toks, {[], []}).
 parse_toks ([], {[], AccForms}) -> parse_forms(AccForms);
@@ -65,9 +74,10 @@ parse_forms ([H|T], Acc) ->
 	parse_forms(T, [Form|Acc]).
 	
 file_attrs (Path) ->
-	[ %{attribute,1,file,{Path,1}},
-	     {attribute,2,module,list_to_atom(filename:rootname(filename:basename(Path)))},
-		{attribute, 3, compile, export_all}].
+	[ {attribute,1,file,{Path,1}},
+	     {attribute,2,module,list_to_atom(filename:rootname(filename:basename(Path)))}
+		% {attribute, 3, compile, export_all}
+		].
 	
 show_filex (Fnam) ->
 	{ok, Bin} = file:read_file(Fnam),

@@ -38,3 +38,13 @@ tap2 (X__) ->
 	maybe(f,
 		fun (X__) -> log(X__), X__ end(
 			maybe(g, X__))).
+			
+mod1 (X__) ->
+	maps:values(
+		maps:put(x, 1, 
+			maps:without([rev, id],
+				X__))).
+		
+		
+		
+		

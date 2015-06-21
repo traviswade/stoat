@@ -11,9 +11,10 @@ Rules.
 
 [A-Z_][0-9a-zA-Z_]* : {token, {var, TokenLine, list_to_atom(TokenChars)}}.
 
-\%.*\n                : skip_token.
+
 "([^"\\]|\\.)*"       : {token, {string, TokenLine, strip(TokenChars, TokenLen)}}.
 
+\.{              : {token, {list_to_atom(TokenChars), TokenLine}}.
 \.               : {token, {dot, TokenLine}}.
 \|\+             : {token, {list_to_atom(TokenChars), TokenLine}}.
 \|-              : {token, {list_to_atom(TokenChars), TokenLine}}.
@@ -36,6 +37,7 @@ Rules.
 [\(\){}\[\];,\|] : {token, {list_to_atom(TokenChars), TokenLine}}.
 [+\-*/=:\&<>#~]  : {token, {list_to_atom(TokenChars), TokenLine}}.
 
+\%.*\n           : skip_token.
 
 andalso          : {token, {list_to_atom(TokenChars), TokenLine}}.
 orelse           : {token, {list_to_atom(TokenChars), TokenLine}}.

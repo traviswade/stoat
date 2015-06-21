@@ -2,6 +2,7 @@
 
 Nonterminals
 form
+attribute attr_val
 expr exprs expr_100 expr_150 expr_160 expr_180 expr_200 expr_300 expr_400
 expr_500 expr_600 expr_700 expr_800 expr_max
 list_comprehension lc_expr lc_exprs
@@ -9,7 +10,6 @@ binary_comprehension
 record_expr record_fields record_tuple record_field
 fun_expr fun_clause fun_clauses fun_clause_body
 fun_argument_list
-short_fun_clause
 atom_or_var integer_or_var
 function function_clauses function_clause function_name
 argument_list arg_exprs arg_expr arg_guards
@@ -27,7 +27,7 @@ Terminals
 char integer float atom string var
 '(' ')' ',' '->' '{' '}' '[' ']' '<-' ';' '|' '<<' '>>' ':' '!'
 '<=' '||' '=>' '&' '#' '.' 
-'|>' '|+' '|-' '|)' '|/' '|m' '|:' '~' '|{'
+'|>' '|+' '|-' '|)' '|/' '|m' '|:' '~' '|{' '.{'
 '::'
 '==' '=:=' '=/=' '<' '>' '>=' '=<' '/='
 '++' '--'
@@ -40,7 +40,13 @@ dot.
 
 Rootsymbol form.
 
+form -> attribute dot : '$1'.
 form -> function dot : '$1'.
+
+attribute -> '-' atom attr_val               : build_attribute('$2', '$3').
+attr_val -> expr                     : ['$1'].
+attr_val -> expr ',' exprs           : ['$1' | '$3'].
+attr_val -> '(' expr ',' exprs ')'   : ['$2' | '$4'].
 
 function -> function_clauses : build_function('$1').
 
@@ -223,14 +229,15 @@ function_call -> expr_800 call_argument_list :
 	% ?p("calling: ~p~n", ['$2']),
 	{call, ?line('$1'),'$1', element(1, '$2')}.
 
-fun_expr -> atom '/' integer :
-	{'fun',?line('$1'),{function,element(3, '$1'),element(3, '$3')}}.
+% fun_expr -> atom '/' integer :
+% 	{'fun',?line('$1'),{function,element(3, '$1'),element(3, '$3')}}.
 fun_expr -> 'fn' atom_or_var ':' atom_or_var '/' integer_or_var :
 	{'fun',?line('$1'),{function,'$2','$4','$6'}}.
 % fun_expr -> atom ':' atom '/' integer :
 % 	{'fun',?line('$1'),{function,'$1','$3','$5'}}.
 % fun_expr -> short_fun_clause '}' : build_fun(?line('$1'), ['$1']).
 fun_expr -> '{' fun_clauses '}' : build_fun(?line('$1'), '$2').
+fun_expr -> '.{' expr '}' : stoat_cuts:expr2fun('$2').
 
 
 atom_or_var -> atom : '$1'.
@@ -396,6 +403,56 @@ build_fun(Line, Cs) ->
     end.
 
 
+% build_attribute({atom,La,module}, Val) ->
+%     case Val of
+% 	[{atom,_Lm,Module}] ->
+% 	    {attribute,La,module,Module};
+% 	[{atom,_Lm,Module},ExpList] ->
+% 	    {attribute,La,module,{Module,var_list(ExpList)}};
+% 	_Other ->
+% 	    error_bad_decl(La, module)
+%     end;
+build_attribute({atom,L,export}, Val) ->
+    case Val of
+	[ExpList] ->
+	    {attribute,L,export,farity_list(ExpList)};
+	_Other -> ret_err(L, {badexport, Val})
+    end.
+% build_attribute({atom,La,import}, Val) ->
+%     case Val of
+% 	[{atom,_Lm,Mod},ImpList] ->
+% 	    {attribute,La,import,{Mod,farity_list(ImpList)}};
+% 	_Other -> error_bad_decl(La, import)
+%     end;
+% build_attribute({atom,La,record}, Val) ->
+%     case Val of
+% 	[{atom,_Ln,Record},RecTuple] ->
+% 	    {attribute,La,record,{Record,record_tuple(RecTuple)}};
+% 	_Other -> throw(badrecorddecl, Val)
+%     end;
+% build_attribute({atom,La,file}, Val) ->
+%     case Val of
+% 	[{string,_Ln,Name},{integer,_Ll,Line}] ->
+% 	    {attribute,La,file,{Name,Line}};
+% 	_Other -> error_bad_decl(La, file)
+%     end;
+% build_attribute({atom,La,Attr}, Val) ->
+%     case Val of
+% 	[Expr0] ->
+% 	    Expr = attribute_farity(Expr0),
+% 	    {attribute,La,Attr,term(Expr)};
+% 	_Other -> throw(badattr, Attr)
+%     end.
+          % {cons,3,  {'fun',  3, {function,add,1}},{nil,3}}}
+
+% farity_list({cons,_Lc,{'fun', _Lo,{function,F,A}, _},Tail}) ->
+%     [{A,F}|farity_list(Tail)];
+farity_list({cons,_Lc,{op,   _Lo,'/',{atom,_La,A},{integer,_Li,I}},Tail}) ->
+    [{A,I}|farity_list(Tail)];
+farity_list({nil,_Ln}) -> [];
+farity_list(Other) ->
+	?p({badfaritylist, Other}),
+    ret_err(?line(Other), "bad function arity").
 
 
 check_clauses(Cs, Name, Arity) -> [check_clause(C, Name, Arity) || C <- Cs].

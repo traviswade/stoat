@@ -39,6 +39,12 @@ tap2 -|+ maybe
 	|/ log
 	|> f.
 	
+mod1 -|m maps(-1)
+	|: without([rev, id])
+	|: put(x, 1)
+	|: values.
+	
+	
 
 
 	
