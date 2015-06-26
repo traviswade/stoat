@@ -15,5 +15,5 @@ compile(Config, _AppFile) ->
 % TODO: JUST COMPILING EVERY TIME! USE MAKE OR CHECK TIMESTAMPS
 compile_file (Path) ->
 	Outpath = stoat_util:ebin_dir(Path),
-	filelib:ensure_dir(Outpath),
+	filelib:ensure_dir(filename:join([Outpath, "out.ebin"])),
 	stoat:compile(Path, #{outpath => Outpath}).
