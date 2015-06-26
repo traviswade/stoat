@@ -43,7 +43,7 @@ compile (Path) -> compile(Path, ?default_opts).
 compile (Path, Opts) ->
 	{ok, Forms} = parse_file(Path),
 	{ok, Mod, Bin} = compile:forms(Forms),
-	Outpath = file:join([maps:get(outpath, Opts), atom_to_list(Mod)++?beam])
+	Outpath = file:join([maps:get(outpath, Opts), atom_to_list(Mod)++?beam]),
 	file:write_file(Outpath, Bin).
 
 parse_file (Path) ->
