@@ -1,6 +1,6 @@
 -module(stoat_util).
 
--export([str2expr/1, erlstr2expr/1, no_lines/1, form2erl/1, line/1]).
+-export([str2expr/1, erlstr2expr/1, no_lines/1, form2erl/1, line/1, ebin_dir/1]).
 
 str2expr (Str) ->
 	{ok, Toks, _} = stoat_lex:string(Str ++ "."),
@@ -15,6 +15,10 @@ erlstr2expr (Str) ->
 form2erl (F) -> try
 		erl_prettypr:format(F)
 	catch _:_ -> {error, badform, F} end.
+	
+ebin_dir (SrcPath) ->
+	PathEls = filename:split(filename:dirname(SrcPath)),
+	filename:join([case El of "src" -> "ebin"; Other -> Other end || El <- PathEls]).
 	
 line ({_, L, _}) -> L;
 line (_) -> 0.
