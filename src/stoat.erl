@@ -5,28 +5,23 @@
 
 -include_lib("stoat.hrl").
 
+cli () -> stoatcli:start().
 
-get_expr () -> getline([], fun stoat_parse:parse_expr/1).
-get_forms () -> getline([], fun stoat_parse:parse/1).
-getline (Acc, F) ->
-	    case io:request({get_until, unicode, '-->>', stoat_lex, token, [1]}) of
-			{ok, {dot, Pos}, _} ->
-				Toks = lists:reverse([{dot, Pos}|Acc]),
-				F(Toks);
-			{ok, Tok, _} ->
-				getline([Tok|Acc], F);
-		Other ->
-			error_logger:error_msg("other: ~p~n", [Other]),
-		    Other
-	    end.
+% get_expr () -> getline([], fun stoat_parse:parse_expr/1).
+% get_forms () -> getline([], fun stoat_parse:parse/1).
+% getline (Acc, F) ->
+% 	    case io:request({get_until, unicode, '-->>', stoat_lex, token, [1]}) of
+% 			{ok, {dot, Pos}, _} ->
+% 				Toks = lists:reverse([{dot, Pos}|Acc]),
+% 				F(Toks);
+% 			{ok, Tok, _} ->
+% 				getline([Tok|Acc], F);
+% 		Other ->
+% 			error_logger:error_msg("other: ~p~n", [Other]),
+% 		    Other
+% 	    end.
 
-show (Str) -> 
-	?p("parsing: ~p~n", [Str]),
-	{ok, Tokens, _} = stoat_lex:string(Str),
-	?p("tokens: ~p~n", [Tokens]),
-	{ok, Parsed} =  stoat_parse:parse(Tokens),
-	?p("parsed: ~p~n", [Parsed]),
-	Parsed.
+
 	
 -define(br, "\n\n").
 file_to_erl (Path) ->
@@ -41,22 +36,19 @@ file_to_erl (Path) ->
 		[W(erl_prettypr:format(F) ++ ?br) || F <- Forms1] end),
 	ok.
 	
--define(default_opts, #{outpath => "./"}).
+-define(default_opts, #{outpath => "./"}). 
 -define(suffix, ".st").
 -define(beam, ".beam").
 compile (Path) -> compile(Path, ?default_opts).
 compile (Path, Opts) ->
 	{ok, Forms} = parse_file(Path),
 	{ok, Mod, Bin} = compile:forms(Forms),
-	stoat_util:write_file([maps:get(outpath, Opts), atom_to_list(Mod), ?beam], Bin).
+	file:write_file([maps:get(outpath, Opts), atom_to_list(Mod), ?beam], Bin).
 
 parse_file (Path) ->
 	{ok, Bin} = file:read_file(Path),
 	Str = binary_to_list(Bin),
 	{ok, Toks, Eof} = stoat_lex:string(Str),
-	% ?p("toks: ~p~n", [Toks]),
-	% error_logger:info_msg("tokens: ~p~n", [Toks]),
-	
 	{ok, file_attrs(Path) ++  parse_toks(Toks) ++ [{eof, Eof}]}.
 	
 parse_toks (Toks) -> parse_toks(Toks, {[], []}).
@@ -82,6 +74,14 @@ file_attrs (Path) ->
 show_filex (Fnam) ->
 	{ok, Bin} = file:read_file(Fnam),
 	show(binary_to_list(Bin)).
+	
+show (Str) -> 
+	?p("parsing: ~p~n", [Str]),
+	{ok, Tokens, _} = stoat_lex:string(Str),
+	?p("tokens: ~p~n", [Tokens]),
+	{ok, Parsed} =  stoat_parse:parse(Tokens),
+	?p("parsed: ~p~n", [Parsed]),
+	Parsed.
 	
 	
 %%%%%%%%%%%%%%% 

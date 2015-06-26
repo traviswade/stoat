@@ -44,7 +44,11 @@ mod1 -|m maps(-1)
 	|: put(x, 1)
 	|: values.
 	
-	
+mod2 -|m mydb(1)
+	|: fetch |+ maybe
+	|> somesortofupdate
+	|: save.
+		
 
 
 	

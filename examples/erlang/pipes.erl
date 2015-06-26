@@ -44,6 +44,11 @@ mod1 (X__) ->
 		maps:put(x, 1, 
 			maps:without([rev, id],
 				X__))).
+				
+mod2 (X__) ->
+	maybe(fun (X__) -> mydb:save(X__) end, 
+		maybe(somesortofupdate, 
+			mydb:fetch(X__))).
 		
 		
 		

@@ -98,15 +98,17 @@ do_call (#step{src={'fun', _,_}=Op, line=L, wrappers=[]}, Input) ->
 	{call, L, Op, [Input]};
 do_call (#step{src=Expr, line=L, wrappers=[]}, Input) ->
 	case stoat_cuts:replace_underscore(Input, Expr) of
-		{true, Expr1} -> Expr1;
-		_             -> {call, L, Expr, [Input]}
+		{true, Expr1} ->  Expr1;
+		_             ->  {call, L, Expr, [Input]}
 	end;
-
-do_call (#step{src=F, wrappers=[W], line=L}, Input) ->
-	{call, L, W, [wrap_op(F), Input]}.
+do_call (#step{src=Src, wrappers=[W], line=L}, Input) ->
+	case stoat_cuts:replace_underscore(Input, Src) of
+		{true, Src1} ->  {call, L, W, [Src1, Input]};
+		_            ->  {call, L, W, [wrap_op(Src), Input]}
+	end.
 
 wrap_op ({remote, L, M, F}=Call) ->
-	Arg = {var, L, 'Arg__'},
+	Arg = {var, L, 'X__'},
 	{'fun', L, {clauses, [{clause, L, [Arg], [], [{call, L, Call, [Arg]}]}]}};
 wrap_op ({atom, _, _}=Op)   ->   Op;
 wrap_op ({'fun', _, _}=Op)  ->   Op;
