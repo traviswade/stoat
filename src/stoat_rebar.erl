@@ -6,9 +6,8 @@ compile(Config, _AppFile) ->
 	Targ = filename:join(rebar_utils:get_cwd(), "src"),
 	case true andalso filelib:is_dir(Targ) of
 		true ->
-			io:format("~~ Compiling stoat files: ~p -~n", [Targ]),
 			filelib:fold_files(Targ, "\\.st", true, fun(Path, _Acc) -> compile_file(Path) end, []);
-		_ -> io:format("skipping directory: ~p~n", [Targ])
+		_ -> ok
 	end,
 	ok.
 	
