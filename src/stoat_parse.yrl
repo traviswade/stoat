@@ -15,7 +15,7 @@ function function_clauses function_clause function_name
 argument_list arg_exprs arg_expr arg_guards
 clause_args clause_guard clause_body
 guard
-function_call call_argument_list
+function_call call_argument_list trailing_closure
 tuple
 atomic strings list tail 
 binary bin_elements bin_element bit_size_expr 
@@ -27,7 +27,7 @@ Terminals
 char integer float atom string var
 '(' ')' ',' '->' '{' '}' '[' ']' '<-' ';' '|' '<<' '>>' ':' '!'
 '<=' '||' '=>' '&' '#' '.' 
-'|>' '|+' '|-' '|)' '|/' '|m' '|:' '~' '|{' '.{'
+'|>' '|+' '|-' '|)' '|/' '|<' '|:' '~' '|{' '.{'
 '::'
 '==' '=:=' '=/=' '<' '>' '>=' '=<' '/='
 '++' '--'
@@ -92,8 +92,8 @@ clause_body -> '->' exprs: '$2'.
 expr -> expr_100 : '$1'.
 
 
-% no assignment!
-% expr_100 -> expr_150 '=' expr_100 : {match,?line('$2'),'$1','$3'}.
+% not allowed in fun or function bodies.
+expr_100 -> expr_150 '=' expr_100 : {match,?line('$2'),'$1','$3'}.
 expr_100 -> expr_150 '!' expr_100 : ?mkop2('$1', '$2', '$3').
 expr_100 -> expr_150 : '$1'.
 
@@ -224,13 +224,16 @@ record_field -> atom '=' expr : {record_field,?line('$1'),'$1','$3'}.
 
 
 
-function_call -> expr_800 call_argument_list : 
-	% stoat_cuts:transform({call,?line('$1'),'$1',element(1, '$2')}).
-	% ?p("calling: ~p~n", ['$2']),
-	{call, ?line('$1'),'$1', element(1, '$2')}.
+function_call -> expr_800 call_argument_list trailing_closure: 
+	{call, ?line('$1'),'$1', element(1, '$2') ++ '$3'}.
 
-% fun_expr -> atom '/' integer :
-% 	{'fun',?line('$1'),{function,element(3, '$1'),element(3, '$3')}}.
+function_call -> expr_800 fun_expr: 
+	{call, ?line('$1'), '$1', ['$2']}.
+
+trailing_closure -> fun_expr : ['$1'].
+trailing_closure -> '$empty' : [].
+	
+
 fun_expr -> 'fn' atom_or_var ':' atom_or_var '/' integer_or_var :
 	{'fun',?line('$1'),{function,'$2','$4','$6'}}.
 % fun_expr -> atom ':' atom '/' integer :
@@ -341,6 +344,9 @@ pipe -> expr_200 pipe_calls : {'$1', '$2', ?line('$1')}.
 pipe_calls -> pipe_call : ['$1'].
 pipe_calls -> pipe_call pipe_calls : ['$1'|'$2'].
 pipe_call -> pipe_op expr_200 pipe_bindings : {'$1', '$2', '$3', ?line('$1')}.
+% pipe_call -> pipe_op atom fun_expr pipe_bindings : 
+% 	?p("t-------rying to make binding: ~p~n", ['$3']),
+% 	{'$1', {call, ?line('$1'), '$2', ['$3']}, '$4', ?line('$1')}.
 
 % |{ is sugar for |> {
 pipe_call -> '|{' fun_clauses '}' : {{'|>', ?line('$1')}, build_fun(?line('$1'), '$2'), [], ?line('$1')}.
@@ -350,7 +356,7 @@ pipe_op -> '|+'  : '$1'.
 pipe_op -> '|-'  : '$1'.
 pipe_op -> '|)'  : '$1'.
 pipe_op -> '|/'  : '$1'.
-pipe_op -> '|m'  : '$1'.
+pipe_op -> '|<'  : '$1'.
 pipe_op -> '|:'  : '$1'.
 pipe_bindings -> '$empty' : [].
 pipe_bindings -> pipe_binding pipe_bindings : ['$1'|'$2'].
@@ -417,19 +423,19 @@ build_attribute({atom,L,export}, Val) ->
 	[ExpList] ->
 	    {attribute,L,export,farity_list(ExpList)};
 	_Other -> ret_err(L, {badexport, Val})
-    end.
+    end;
 % build_attribute({atom,La,import}, Val) ->
 %     case Val of
 % 	[{atom,_Lm,Mod},ImpList] ->
 % 	    {attribute,La,import,{Mod,farity_list(ImpList)}};
 % 	_Other -> error_bad_decl(La, import)
 %     end;
-% build_attribute({atom,La,record}, Val) ->
-%     case Val of
-% 	[{atom,_Ln,Record},RecTuple] ->
-% 	    {attribute,La,record,{Record,record_tuple(RecTuple)}};
-% 	_Other -> throw(badrecorddecl, Val)
-%     end;
+build_attribute({atom,L,record}, Val) ->
+    case Val of
+	[{atom,_L,Record},RecTuple] ->
+	    {attribute, L, mrecord, {Record,record_tuple(RecTuple)}};
+	_ -> ret_err(badrecorddecl, Val)
+    end.
 % build_attribute({atom,La,file}, Val) ->
 %     case Val of
 % 	[{string,_Ln,Name},{integer,_Ll,Line}] ->
@@ -453,6 +459,34 @@ farity_list({nil,_Ln}) -> [];
 farity_list(Other) ->
 	?p({badfaritylist, Other}),
     ret_err(?line(Other), "bad function arity").
+
+record_tuple({tuple,_Lt,Fields}) ->
+    record_fields(Fields);
+record_tuple(Other) ->
+    ret_err(?line(Other), "bad record declaration").
+
+record_fields([{atom,La,A}|Fields]) ->
+    [{record_field,La,{atom,La,A}}|record_fields(Fields)];
+record_fields([{match,_Lm,{atom,La,A},Expr}|Fields]) ->
+    [{record_field,La,{atom,La,A},Expr}|record_fields(Fields)];
+% record_fields([{typed,Expr,TypeInfo}|Fields]) ->
+%     [Field] = record_fields([Expr]),
+%     TypeInfo1 =
+% 	case Expr of
+% 	    {match, _, _, _} -> TypeInfo; %% If we have an initializer.
+% 	    {atom, La, _} ->
+%                 case has_undefined(TypeInfo) of
+%                     false ->
+%                         TypeInfo2 = maybe_add_paren(TypeInfo),
+%                         lift_unions(abstract(undefined, La), TypeInfo2);
+%                     true ->
+%                         TypeInfo
+%                 end
+% 	end,
+%     [{typed_record_field,Field,TypeInfo1}|record_fields(Fields)];
+record_fields([Other|_Fields]) ->
+    ret_err(?line(Other), "bad record field");
+record_fields([]) -> [].
 
 
 check_clauses(Cs, Name, Arity) -> [check_clause(C, Name, Arity) || C <- Cs].

@@ -11,3 +11,7 @@ anoncuts () -> [
 multiclause () ->
 	{{struct, L}| L; 
 	L| L}.
+	
+
+trailer () ->
+	m:f(1){X | X + 1}. 

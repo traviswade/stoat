@@ -12,3 +12,6 @@ multiclause () ->
 	fun ({struct, L}) -> L;
 		(L)           -> L
 	end.
+	
+trailer () ->
+	m:f(1, fun(X) -> X + 1 end).

@@ -11,6 +11,10 @@ to_list (X) when is_list(X) -> X;
 to_list (X) when is_binary(X) -> binary_to_list(X);
 to_list (X) when is_integer(X) -> integer_to_list(X).
 
-
 order (X, Y) when Y < X -> {Y, X};
 order (X, Y)            -> {X, Y}.
+
+-record(usr, {name, email}).
+name (#usr{name=N}) -> N.
+
+noassign ({_}=A) -> 1.

@@ -26,9 +26,11 @@ proc_steps ([{{'|-',_}, {_,_,ToRemove}, [], _L}|T], #s{wrappers=[{_,_,ToRemove}]
 proc_steps ([{{'|-', _}, _, _, _}|T], Acc) ->
 	proc_steps(T, Acc);
 	
-proc_steps ([{{'|m', _}, {call, L, Mod, [Pos]}, [], _L}|T], Acc) ->
-	?p("adding module: ~p~n", [{Mod, Pos}]),
+proc_steps ([{{'|<', _}, {call, L, Mod, [Pos]}, [], _L}|T], Acc) ->
 	proc_steps(T, Acc#s{mod={Mod, Pos}});
+	
+proc_steps ([{{'|<', _}, {atom, L, Mod}, [], _L}|T], Acc) ->
+	proc_steps(T, Acc#s{mod={{atom, L, Mod}, 'default_|<_pos'(Mod)}});
 	
 proc_steps ([{{'|:', L}, Call, B, _L}|T], #s{steps=Steps, wrappers=W, mod=M}=Acc) ->
 	proc_steps(T, Acc#s{steps=[
@@ -69,7 +71,7 @@ check_binding (Val) -> Val.
 	
 do_call (#step{src={tap, F}, line=L}, Input) ->
 	Arg = {var, L, 'X__'},
-	Fun = {'fun', L, {clauses, [{clause, L, [Arg], [], [{call, L, F, [Arg]}, Arg]}]}},
+	Fun = {'fun', L, {clauses, [{clause, L, [Arg], [], [{call, L, F, [Arg]}, Arg]}]}}, 
 	{call, L, Fun, [Input]};
 	
 do_call (#step{src={mod, {M, Pos}, Call}, line=L}=Step, Input) ->
@@ -79,6 +81,8 @@ do_call (#step{src={mod, {M, Pos}, Call}, line=L}=Step, Input) ->
 		{call, _L, F, Args} ->
 			Pivot = case Pos of
 				{integer, _, N} -> N;
+				N when is_integer(N), N >= 0 -> N;
+				N when is_integer(N) -> length(Args)+N+1;
 				{op,_,'-',{integer,_,N}} -> length(Args)-N+1
 			end,
 			{Bef, Aft} = lists:split(Pivot, Args),
@@ -114,6 +118,10 @@ wrap_op ({atom, _, _}=Op)   ->   Op;
 wrap_op ({'fun', _, _}=Op)  ->   Op;
 wrap_op ({var, _, _}=Op)    ->   Op;
 wrap_op (Op)                ->   Op.
+
+'default_|<_pos' (lists) -> -1;
+'default_|<_pos' (maps) -> -1;
+'default_|<_pos' (_) -> -1.
 
 
 
