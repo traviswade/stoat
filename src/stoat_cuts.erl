@@ -2,30 +2,8 @@
 
 % -export([transform/1]).
 
--export([find_var/1, replace_underscore/2, expr2fun/1]).
+-export([find_var/1, replace_underscore/2, replace_var/3, expr2fun/1]).
 
-
-% transform ({call, L, Op, Args}=In) ->
-% 	case check_args(Args) of
-% 		{[], _} -> 
-% 			In;
-% 		{Missing, Args1} ->
-% 			{'fun', L, {clauses, [{clause, L, Missing, [], [{call, L, Op, Args1}]}]}}
-% 	end.
-% 	
-% check_args (Args) -> check_args(Args, {[], []}).
-% 
-% check_args ([], {Missing, Args1}) -> 
-% 	{lists:reverse(Missing), lists:reverse(Args1)};
-% 	
-% check_args ([{var, L, '_'}|T], {Missing, Args1}) ->
-% 	DummyArg = {var, L, list_to_atom("Arg__" ++ integer_to_list(length(Missing)))},
-% 	check_args(T, {[DummyArg|Missing], [DummyArg|Args1]});
-% 	
-% check_args ([Arg|T], {Missing, Args1}) ->
-% 	check_args(T, {Missing, [Arg|Args1]}).
-% 
-% find_cut (Expr) -> ok.
 
 % find the (first-ish) variable in an argument
 % for example to use in a cut, and return the (atom) variale name
@@ -53,66 +31,68 @@ is_var ({var, _, V}=Var) when is_atom(V) ->
 expr2fun (Expr) ->
 	L = stoat_util:line(Expr),
 	Var = {var, L, 'X__'},
-	case replace_underscore(Var, Expr) of
+	case replace_var(Var, Expr, fun is__/1) of
 		{true, Expr1} ->
 			{'fun', L, {clauses, [{clause, L, [Var], [], [Expr1]}]}};
 		_ ->
 			{'fun', L, {clauses, [{clause, L, [], [], [Expr]}]}}
 	end.
+	
+replace_underscore(Var, Node) -> replace_var(Var, Node, fun is__/1).
 
-replace_underscore (Var, {cons, Line, H, T}=A) ->
-	case replace_underscore(Var, H) of
+replace_var (Var, {cons, Line, H, T}=A, F) ->
+	case replace_var(Var, H, F) of
 		{true, H1} -> {true, {cons, Line, H1, T}};
-		_ -> case replace_underscore(Var, T) of
+		_ -> case replace_var(Var, T, F) of
 			{true, T1} -> {true, {cons, Line, H, T1}};
 			_ -> {false, A}
 		end
 	end;
-replace_underscore (Var, {tuple, Line, Elems}=T) ->
-	case replace_underscore(Var, Elems) of
+replace_var (Var, {tuple, Line, Elems}=T, F) ->
+	case replace_var(Var, Elems, F) of
 		{true, Elems1} -> {true, {tuple, Line, Elems1}};
 		_ -> {false, T}
 	end;
-replace_underscore (Var, {record_field, Line, Field, Val}=A) ->
-	case replace_underscore(Var, Val) of
+replace_var (Var, {record_field, Line, Field, Val}=A, F) ->
+	case replace_var(Var, Val, F) of
 		{true, Val1} -> {true, {record_field, Line, Field, Val1}};
 		_ -> {false, A}
 	end;
-replace_underscore (Var, [H|T]) ->
-	case replace_underscore(Var, H) of
+replace_var (Var, [H|T], F) ->
+	case replace_var(Var, H, F) of
 		{true, H1} -> {true, [H1|T]};
-		_ -> case replace_underscore(Var, T) of
+		_ -> case replace_var(Var, T, F) of
 			{true, T1} -> {true, [H|T1]};
 			_ -> {false, [H|T]}
 		end
 	end;
-replace_underscore (Var, {record, Line, Record, Fields}=A) ->
-	case replace_underscore(Var, Fields) of
+replace_var (Var, {record, Line, Record, Fields}=A, F) ->
+	case replace_var(Var, Fields, F) of
 		{true, Fields1} -> {true, {record, Line, Record, Fields1}};
 		_ -> {false, A}
 	end;
-replace_underscore (Var, {op, Line, Op, X, Y}=A) ->
-	case replace_underscore(Var, X) of 
+replace_var (Var, {op, Line, Op, X, Y}=A, F) ->
+	case replace_var(Var, X, F) of 
 		{true, X1} -> {true, {op, Line, Op, X1, Y}};
-		_ -> case replace_underscore(Var, Y) of
+		_ -> case replace_var(Var, Y, F) of
 			{true, Y1} -> {true, {op, Line, Op, X, Y1}};
 			_ -> {false, A}
 		end
 	end;
-replace_underscore (Var, {var, Line, A}) ->
-	case is__(A) of 
+replace_var (Var, {var, Line, A}, F) ->
+	case F(A) of 
 		true -> {true, Var}; % TODO: replace line in var with Line
 		_ -> {false, {var, Line, A}}
 	end;
-replace_underscore (Var, {call, L, Op, Args}=Call) ->
-	case replace_underscore(Var, Op) of
+replace_var (Var, {call, L, Op, Args}=Call, F) ->
+	case replace_var(Var, Op, F) of
 		{true, Op1} -> {true, {call, L, Op1, Args}};
-		_ -> case replace_underscore(Var, Args) of
+		_ -> case replace_var(Var, Args, F) of
 			{true, Args1} -> {true, {call, L, Op, Args1}};
 			_ -> {false, Call}
 		end
 	end;
-replace_underscore (_, X) -> {false, X}.
+replace_var (_, X, _) -> {false, X}.
 
 is__ (A) when is_atom(A) -> is__(atom_to_list(A));
 is__ ("_"++_) -> true;
@@ -127,7 +107,7 @@ find_var_test () ->
 	?assertEqual('A', F("#r{a=A}")),
 	?assertEqual('A', F("{_, A}")).
 	
-replace_underscore_test () ->
+replace_var_test () ->
 	F1 = fun(Str) -> stoat_util:str2expr(Str) end,
 	F2 = fun(Str) -> replace_underscore({var, 1, 'A'}, F1(Str)) end,
 	?assertEqual({true, F1("A>1")}, F2("_>1")),
