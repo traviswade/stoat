@@ -33,6 +33,17 @@ mod2 -|< mydb(1)
 mod3 -|< lists
 	|: filter.{_>1}
 	|: map.{_+10}.
+	
+case1 -|> _+1
+	?[
+		2 -> one;
+		3 -> two;
+		_ -> other]
+	|> atom_to_list.
+	
+case2 -?[
+	I::(integer, _>2) -> ok; 
+	_ -> error].
 
 
 

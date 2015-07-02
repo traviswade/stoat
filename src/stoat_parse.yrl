@@ -9,10 +9,12 @@ list_comprehension lc_expr lc_exprs
 binary_comprehension
 record_expr record_fields record_tuple record_field
 fun_expr fun_clause fun_clauses fun_clause_body
-fun_argument_list
+fun_argument_list map_expr
+map_tuple map_fields map_field map_field_assoc map_field_exact map_key
 atom_or_var integer_or_var
 function function_clauses function_clause function_name
 argument_list arg_exprs arg_expr arg_guards
+cr_clauses cr_clause
 clause_args clause_guard clause_body
 guard
 function_call call_argument_list trailing_closure
@@ -26,8 +28,8 @@ pipe pipe_op pipe_call pipe_calls pipe_bindings pipe_binding.
 Terminals
 char integer float atom string var
 '(' ')' ',' '->' '{' '}' '[' ']' '<-' ';' '|' '<<' '>>' ':' '!'
-'<=' '||' '=>' '&' '#' '.' 
-'|>' '|+' '|-' '|)' '|/' '|<' '|:' '~' '|{' '.{'
+'<=' '||' '=>' '&' '#' '.' ':='
+'|>' '|+' '|-' '|)' '|/' '|<' '|:' '~' '|{' '.{' '?['
 '::'
 '==' '=:=' '=/=' '<' '>' '>=' '=<' '/='
 '++' '--'
@@ -119,8 +121,7 @@ expr_500 -> expr_500 mult_op expr_600 : ?mkop2('$1', '$2', '$3').
 expr_500 -> expr_600 : '$1'.
 
 expr_600 -> prefix_op expr_700 : ?mkop1('$1', '$2').
-% expr_600 -> map_expr : '$1'.
-% expr_600 -> expr_650 : '$1'.
+expr_600 -> map_expr : '$1'.
 expr_600 -> expr_700 : '$1'.
 
 % expr_650 -> pipe : stoat_pipes:transform('$1').
@@ -198,9 +199,22 @@ tuple -> '{' '}'       : {tuple, ?line('$1'), []}.
 tuple -> '{' exprs '}' : {tuple, ?line('$1'), '$2'}.
 
 
-% record_expr -> '#' atom '.' atom.
+map_expr -> '#' map_tuple          : {map, ?line('$1'),'$2'}.
+map_expr -> expr_max '#' map_tuple : {map, ?line('$2'),'$1','$3'}.
+map_expr -> map_expr '#' map_tuple : {map, ?line('$2'),'$1','$3'}.
 
-% TODO: MAPS!
+map_tuple -> '{' '}' : [].
+map_tuple -> '{' map_fields '}' : '$2'.
+
+map_fields -> map_field : ['$1'].
+map_fields -> map_field ',' map_fields : ['$1' | '$3'].
+
+map_field -> map_field_assoc : '$1'.
+map_field -> map_field_exact : '$1'.
+map_field_assoc -> map_key '=>' expr : {map_field_assoc,?line('$1'),'$1','$3'}.
+map_field_exact -> map_key ':=' expr : {map_field_exact,?line('$1'),'$1','$3'}.
+
+map_key -> expr : '$1'.
 
 %%%%%%%%%% records %%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -290,11 +304,13 @@ guard -> exprs : ['$1'].
 guard -> exprs ';' guard : ['$1'|'$3'].
 
 % TODO : IF EXPRESSIONS
-% TODO : CASE EXPRESSIONS  -- covered by case funs
+
+
+
 % TODO : RECEIVE EXPRESSIONS
 % TODO : TRY, TRY-CATCH EXPRESSIONS
 
-% atomic -> char : '$1'.
+atomic -> char : '$1'.
 atomic -> integer : '$1'.
 atomic -> float : '$1'.
 atomic -> atom : '$1'.
@@ -350,6 +366,14 @@ pipe_call -> pipe_op expr_200 pipe_bindings : {'$1', '$2', '$3', ?line('$1')}.
 
 % |{ is sugar for |> {
 pipe_call -> '|{' fun_clauses '}' : {{'|>', ?line('$1')}, build_fun(?line('$1'), '$2'), [], ?line('$1')}.
+
+pipe_call -> '?[' cr_clauses pipe_bindings ']' : {'|?', '$2', '$3', ?line('$1')}.
+
+cr_clauses -> cr_clause : ['$1'].
+cr_clauses -> cr_clause ';' cr_clauses : ['$1' | '$3'].
+cr_clause -> arg_expr clause_guard clause_body :
+	{[Item], Guards} = stoat_guards:compose_guards(['$1']),
+	{clause, ?line(Item), [Item], Guards,'$3'}.
 
 pipe_op -> '|>'  : '$1'.
 pipe_op -> '|+'  : '$1'.

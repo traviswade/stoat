@@ -9,7 +9,7 @@ Rules.
 
 
 
-[A-Z_][0-9a-zA-Z_]* : {token, {var, TokenLine, list_to_atom(TokenChars)}}.
+[A-Z_@][0-9a-zA-Z_]* : {token, {var, TokenLine, list_to_atom(TokenChars)}}.
 
 
 "([^"\\]|\\.)*"       : {token, {string, TokenLine, strip(TokenChars, TokenLen)}}.
@@ -24,17 +24,19 @@ Rules.
 \|<              : {token, {list_to_atom(TokenChars), TokenLine}}.
 \|:              : {token, {list_to_atom(TokenChars), TokenLine}}.
 \|{              : {token, {list_to_atom(TokenChars), TokenLine}}.
-->               : {token, {list_to_atom(TokenChars), TokenLine}}.
+\?\[             : {token, {list_to_atom(TokenChars), TokenLine}}.
 ->               : {token, {list_to_atom(TokenChars), TokenLine}}.
 
 ::               : {token, {list_to_atom(TokenChars), TokenLine}}.
 
 <-               : {token, {list_to_atom(TokenChars), TokenLine}}.
 =>               : {token, {list_to_atom(TokenChars), TokenLine}}.
+:=               : {token, {list_to_atom(TokenChars), TokenLine}}.
 <<               : {token, {list_to_atom(TokenChars), TokenLine}}.
 >>               : {token, {list_to_atom(TokenChars), TokenLine}}.
 \|\|             : {token, {list_to_atom(TokenChars), TokenLine}}.
 [\(\){}\[\];,\|] : {token, {list_to_atom(TokenChars), TokenLine}}.
+\+\+             : {token, {list_to_atom(TokenChars), TokenLine}}.
 [+\-*/=:\&<>#~]  : {token, {list_to_atom(TokenChars), TokenLine}}.
 
 \%.*\n           : skip_token.
@@ -46,7 +48,7 @@ end              : {token, {list_to_atom(TokenChars), TokenLine}}.
 
 [a-z][0-9a-zA-Z_]*  : {token, {atom, TokenLine, list_to_atom(TokenChars)}}.
 
-
+\$.              : {token, {char, TokenLine, lists:nth(2, TokenChars)}}.
 
 {D}+  : {token, {integer, TokenLine, list_to_integer(TokenChars)}}.
 (\+|-)?[0-9]+\.[0-9]+((E|e)(\+|-)?[0-9]+)? : {token, {float, TokenLine, list_to_float(TokenChars)}}.

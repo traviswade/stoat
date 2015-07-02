@@ -19,8 +19,9 @@ test_example (Fil) ->
 	{ok, Erl} = epp:parse_file(?relpth ++ "examples/erlang/" ++ Fil ++ ".erl", []),
 	Fs = [{F, stoat_util:form2erl(F)} || {function, _,_,_,_}=F <- Stoat],
 	Fe = [{F, stoat_util:form2erl(F)} || {function, _,_,_,_}=F <- Erl],
-	% ?p("ok:: ST:~p~n~nERL:~p~n~n", [Stoat, Erl]),
+	% ?p("ok:: ST:~p~n~nERL:~p~n~n", [Fs, Fe]),
 	lists:foreach(fun({{Fa, A}, {Fb, B}}) -> 
+			% ?p("testing: ~p~n~p~n~n---~n", [A, B]),
 			case A of B -> ok; _ ->
 					error_logger:info_msg("~p ~nIS NOT~n ~p~n", [A, B]),
 					error_logger:info_msg("~p ~nIS NOT~n ~p~n", [Fa, Fb])

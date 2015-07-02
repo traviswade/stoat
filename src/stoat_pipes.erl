@@ -35,6 +35,10 @@ proc_steps ([{{'|<', _}, {atom, L, Mod}, [], _L}|T], Acc) ->
 proc_steps ([{{'|:', L}, Call, B, _L}|T], #s{steps=Steps, wrappers=W, mod=M}=Acc) ->
 	proc_steps(T, Acc#s{steps=[
 		#step{src={mod, M, Call}, line=L, wrappers=W, bind=B}|Steps]});
+		
+proc_steps ([{'|?', Clauses, Bind, L}|T], #s{steps=Steps}=Acc) ->
+	Stmt = {'case', L, {var, L, '_'}, Clauses},
+	proc_steps(T, Acc#s{steps=[#step{src=Stmt}|Steps]});
 	
 proc_steps ([{{'|>', L}, F, Bind, _L}|T], #s{steps=Steps, wrappers=W}=Acc) ->	
 	proc_steps(T, Acc#s{steps=[#step{wrappers=W, src=F, line=L, bind=Bind}|Steps]});
@@ -103,7 +107,7 @@ do_call (#step{src={'fun', _,_}=Op, line=L, wrappers=[]}, Input) ->
 do_call (#step{src=Expr, line=L, wrappers=[]}, Input) ->
 	case stoat_cuts:replace_underscore(Input, Expr) of
 		{true, Expr1} ->  Expr1;
-		_             ->  {call, L, Expr, [Input]}
+		Other             ->  {call, L, Expr, [Input]}
 	end;
 do_call (#step{src=Src, wrappers=[W], line=L}, Input) ->
 	case stoat_cuts:replace_underscore(Input, Src) of

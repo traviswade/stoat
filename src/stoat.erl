@@ -61,7 +61,7 @@ parse_toks ([H|T], {AccForm, AccForms}) ->
 	parse_toks(T, {[H|AccForm], AccForms}).
 	
 parse_forms (ReversedForms) -> parse_forms(ReversedForms, []).
-parse_forms ([], Acc) -> Acc;
+parse_forms ([], Acc) -> proc_forms(Acc);
 parse_forms ([H|T], Acc) -> 
 	{ok, Form} = stoat_parse:parse(H),
 	parse_forms(T, [Form|Acc]).
@@ -86,7 +86,7 @@ show (Str) ->
 	
 	
 %%%%%%%%%%%%%%% 
-proc_forms (Forms) -> Forms.
-	% lists:foldl(fun(Mod, Acc) -> Mod:process_forms(Acc) end, Forms, [
-	% 	stoat_pipes]).
+proc_forms (Forms) ->
+	lists:foldl(fun(Mod, Acc) -> Mod:transform(Acc) end, Forms, [
+		]). %stoat_inline_fun]).
 		

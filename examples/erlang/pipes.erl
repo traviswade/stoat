@@ -34,5 +34,17 @@ mod3 (X__) ->
 	lists:map(fun(X__) -> X__+10 end, 
 		lists:filter(fun(X__) -> X__>1 end, X__)).
 		
+case1 (X__) ->
+	atom_to_list(
+		case X__+1 of
+			2 -> one;
+			3 -> two;
+			_ -> other end).
+		
+case2 (X__) ->
+	case X__ of
+		I when is_integer(I), I > 2 -> ok;
+		_ -> error end.
+
 
 

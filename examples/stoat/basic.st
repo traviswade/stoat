@@ -7,6 +7,16 @@ const () -> k.
 add (X) -> X + 1.
 add1 -|> _ + 1.
 
+strings1 () -> "abc".
+strings2 () -> "abc" "def".
+strings3 () -> "abc" ++ "def".
+strings4 () -> [$a|"bc"].
+
+bin1 () -> <<"abc">>.
+
+maps1 () -> #{a=>1}.
+maps2 (M) -> M#{b=>2}.
+
 to_list (X::list)    -> X;
 	(X::binary)  -> binary_to_list(X);
 	(X::integer) -> integer_to_list(X).
