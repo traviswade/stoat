@@ -36,8 +36,13 @@ proc_steps ([{{'|:', L}, Call, B, _L}|T], #s{steps=Steps, wrappers=W, mod=M}=Acc
 	proc_steps(T, Acc#s{steps=[
 		#step{src={mod, M, Call}, line=L, wrappers=W, bind=B}|Steps]});
 		
-proc_steps ([{'|?', Clauses, Bind, L}|T], #s{steps=Steps}=Acc) ->
+proc_steps ([{'?[', Clauses, Bind, L}|T], #s{steps=Steps}=Acc) ->
 	Stmt = {'case', L, {var, L, '_'}, Clauses},
+	proc_steps(T, Acc#s{steps=[#step{src=Stmt}|Steps]});
+	
+proc_steps ([{'?{', Y, N, L}|T], #s{steps=Steps}=Acc) ->
+	Stmt = {'if', L, [{clause, L, [], [[{var, L, '_'}]], [Y]},
+		            {clause, L, [], [[{atom, L, true}]], [N]}]},
 	proc_steps(T, Acc#s{steps=[#step{src=Stmt}|Steps]});
 	
 proc_steps ([{{'|>', L}, F, Bind, _L}|T], #s{steps=Steps, wrappers=W}=Acc) ->	

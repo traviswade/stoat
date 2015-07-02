@@ -44,6 +44,10 @@ case1 -|> _+1
 case2 -?[
 	I::(integer, _>2) -> ok; 
 	_ -> error].
+	
+
+
+if1 -?{ok, error}.
 
 
 

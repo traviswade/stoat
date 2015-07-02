@@ -44,7 +44,9 @@ case1 (X__) ->
 case2 (X__) ->
 	case X__ of
 		I when is_integer(I), I > 2 -> ok;
-		_ -> error end.
+		_ -> error 
+	end.
 
+if1 (X__) -> if X__ -> ok; true -> error end.
 
 

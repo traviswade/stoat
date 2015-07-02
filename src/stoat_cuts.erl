@@ -84,6 +84,11 @@ replace_var (Var, {'case', L, Head, Clauses}=C, F) ->
 		{true, Head1} -> {true, {'case', L, Head1, Clauses}};
 		_ -> {false, C}
 	end;
+replace_var (Var, {'if', L, [{clause, L, [], Cond, Y}, Else]}=If, F) ->
+	case replace_var(Var, Cond, F) of
+		{true, Cond1} -> {true, {'if', L, [{clause, L, [], Cond1, Y}, Else]}};
+		_ -> {false, If}
+	end;
 replace_var (Var, {record, Line, Head, Record, Fields}=Rec, F) ->
 	case replace_var(Var, Head, F) of
 		{true, Head1} ->

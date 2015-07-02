@@ -29,7 +29,7 @@ Terminals
 char integer float atom string var
 '(' ')' ',' '->' '{' '}' '[' ']' '<-' ';' '|' '<<' '>>' ':' '!'
 '<=' '||' '=>' '&' '#' '.' ':='
-'|>' '|+' '|-' '|)' '|/' '|<' '|:' '~' '|{' '.{' '?['
+'|>' '|+' '|-' '|)' '|/' '|<' '|:' '~' '|{' '.{' '?[' '?{'
 '::'
 '==' '=:=' '=/=' '<' '>' '>=' '=<' '/='
 '++' '--'
@@ -303,7 +303,6 @@ arg_guards -> '::' '(' exprs ')' : '$3'.
 guard -> exprs : ['$1'].
 guard -> exprs ';' guard : ['$1'|'$3'].
 
-% TODO : IF EXPRESSIONS
 
 
 
@@ -367,7 +366,9 @@ pipe_call -> pipe_op expr_200 pipe_bindings : {'$1', '$2', '$3', ?line('$1')}.
 % |{ is sugar for |> {
 pipe_call -> '|{' fun_clauses '}' : {{'|>', ?line('$1')}, build_fun(?line('$1'), '$2'), [], ?line('$1')}.
 
-pipe_call -> '?[' cr_clauses pipe_bindings ']' : {'|?', '$2', '$3', ?line('$1')}.
+pipe_call -> '?[' cr_clauses pipe_bindings ']' : {'?[', '$2', '$3', ?line('$1')}.
+
+pipe_call -> '?{' expr ',' expr '}' : { '?{', '$2', '$4', ?line('$1')}.
 
 cr_clauses -> cr_clause : ['$1'].
 cr_clauses -> cr_clause ';' cr_clauses : ['$1' | '$3'].
