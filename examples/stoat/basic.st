@@ -25,6 +25,11 @@ trycatch2 () ->
 maps1 () -> #{a=>1}.
 maps2 (M) -> M#{b=>2}.
 
+sendrec () ->
+	F = {|receive N::integer -> log({int, N}); _ -> log(other) end},
+	Pid = spawn(F),
+	Pid ! 2.
+
 to_list (X::list)    -> X;
 	(X::binary)  -> binary_to_list(X);
 	(X::integer) -> integer_to_list(X).

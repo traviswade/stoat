@@ -10,6 +10,7 @@ binary_comprehension try_expr try_catch try_clauses try_clause
 record_expr record_fields record_tuple record_field
 fun_expr fun_clause fun_clauses fun_clause_body
 fun_argument_list map_expr
+receive_expr
 map_tuple map_fields map_field map_field_assoc map_field_exact map_key
 atom_or_var integer_or_var
 function function_clauses function_clause function_name
@@ -35,7 +36,7 @@ char integer float atom string var
 '++' '--'
 '*' '/' 'div' 'rem' 'band' 'and' 'fn' 'end'
 'andalso' 'orelse'
-'try' 'catch' 'of' 'after'
+'try' 'catch' 'of' 'after' 'receive'
 '+' '-' 'bor' 'bxor' 'bsl' 'bsr' 'or' 'xor' 'bnot' 'not'
 '='
 'when'
@@ -143,10 +144,8 @@ expr_max -> list_comprehension : '$1'.
 expr_max -> binary_comprehension : '$1'.
 expr_max -> tuple : '$1'.
 expr_max -> '(' expr ')' : '$2'.
-% expr_max -> 'begin' exprs 'end' : {block,?line('$1'),'$2'}.
-% expr_max -> if_expr : '$1'.
-% expr_max -> case_expr : '$1'.
-% expr_max -> receive_expr : '$1'.
+
+expr_max -> receive_expr : '$1'.
 expr_max -> fun_expr : '$1'.
 expr_max -> try_expr : '$1'.
 
@@ -402,6 +401,13 @@ cr_clauses -> cr_clause ';' cr_clauses : ['$1' | '$3'].
 cr_clause -> arg_expr clause_guard clause_body :
 	{[Item], Guards} = stoat_guards:compose_guards(['$1']),
 	{clause, ?line(Item), [Item], Guards,'$3'}.
+
+receive_expr -> 'receive' cr_clauses 'end' :
+	{'receive',?line('$1'),'$2'}.
+receive_expr -> 'receive' 'after' expr clause_body 'end' :
+	{'receive',?line('$1'),[],'$3','$4'}.
+receive_expr -> 'receive' cr_clauses 'after' expr clause_body 'end' :
+	{'receive',?line('$1'),'$2','$4','$5'}.
 
 pipe_op -> '|>'  : '$1'.
 pipe_op -> '|+'  : '$1'.

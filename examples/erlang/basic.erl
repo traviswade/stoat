@@ -21,10 +21,15 @@ trycatch2 () ->
 		_ -> error
 	catch error:badarith -> error
 	end.
-
+		
 maps1 () -> #{a=>1}.
 maps2 (M) -> M#{b=>2}.
 
+sendrec () ->
+	F = fun() -> receive N when is_integer(N) -> log({int, N}); _ -> log(other) end end,
+	Pid = spawn(F),
+	Pid ! 2.
+	
 to_list (X) when is_list(X) -> X;
 to_list (X) when is_binary(X) -> binary_to_list(X);
 to_list (X) when is_integer(X) -> integer_to_list(X).

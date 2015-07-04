@@ -14,43 +14,45 @@ Rules.
 
 "([^"\\]|\\.)*"       : {token, {string, TokenLine, strip(TokenChars, TokenLen)}}.
 
-\.{              : {token, {list_to_atom(TokenChars), TokenLine}}.
-\.               : {token, {dot, TokenLine}}.
-\|\+             : {token, {list_to_atom(TokenChars), TokenLine}}.
-\|-              : {token, {list_to_atom(TokenChars), TokenLine}}.
-\|>              : {token, {list_to_atom(TokenChars), TokenLine}}.
-\|\)             : {token, {list_to_atom(TokenChars), TokenLine}}.
-\|/              : {token, {list_to_atom(TokenChars), TokenLine}}.
-\|<              : {token, {list_to_atom(TokenChars), TokenLine}}.
-\|:              : {token, {list_to_atom(TokenChars), TokenLine}}.
-\|{              : {token, {list_to_atom(TokenChars), TokenLine}}.
-\?\[             : {token, {list_to_atom(TokenChars), TokenLine}}.
-\?\{             : {token, {list_to_atom(TokenChars), TokenLine}}.
+\.{               : {token, {list_to_atom(TokenChars), TokenLine}}.
+\.                : {token, {dot, TokenLine}}.
+\|\+              : {token, {list_to_atom(TokenChars), TokenLine}}.
+\|-               : {token, {list_to_atom(TokenChars), TokenLine}}.
+\|>               : {token, {list_to_atom(TokenChars), TokenLine}}.
+\|\)              : {token, {list_to_atom(TokenChars), TokenLine}}.
+\|/               : {token, {list_to_atom(TokenChars), TokenLine}}.
+\|<               : {token, {list_to_atom(TokenChars), TokenLine}}.
+\|:               : {token, {list_to_atom(TokenChars), TokenLine}}.
+\|{               : {token, {list_to_atom(TokenChars), TokenLine}}.
+\?\[              : {token, {list_to_atom(TokenChars), TokenLine}}.
+\?\{              : {token, {list_to_atom(TokenChars), TokenLine}}.
 
-->               : {token, {list_to_atom(TokenChars), TokenLine}}.
+->                : {token, {list_to_atom(TokenChars), TokenLine}}.
 
-::               : {token, {list_to_atom(TokenChars), TokenLine}}.
+::                : {token, {list_to_atom(TokenChars), TokenLine}}.
 
-<-               : {token, {list_to_atom(TokenChars), TokenLine}}.
-=>               : {token, {list_to_atom(TokenChars), TokenLine}}.
-:=               : {token, {list_to_atom(TokenChars), TokenLine}}.
-<<               : {token, {list_to_atom(TokenChars), TokenLine}}.
->>               : {token, {list_to_atom(TokenChars), TokenLine}}.
-\|\|             : {token, {list_to_atom(TokenChars), TokenLine}}.
-[\(\){}\[\];,\|] : {token, {list_to_atom(TokenChars), TokenLine}}.
-\+\+             : {token, {list_to_atom(TokenChars), TokenLine}}.
-[+\-*/=:\&<>#~]  : {token, {list_to_atom(TokenChars), TokenLine}}.
+<-                : {token, {list_to_atom(TokenChars), TokenLine}}.
+=>                : {token, {list_to_atom(TokenChars), TokenLine}}.
+:=                : {token, {list_to_atom(TokenChars), TokenLine}}.
+<<                : {token, {list_to_atom(TokenChars), TokenLine}}.
+>>                : {token, {list_to_atom(TokenChars), TokenLine}}.
+\|\|              : {token, {list_to_atom(TokenChars), TokenLine}}.
+[\(\){}\[\];,\|]  : {token, {list_to_atom(TokenChars), TokenLine}}.
+\+\+              : {token, {list_to_atom(TokenChars), TokenLine}}.
+[+\-*/=:\&<>#~\!] : {token, {list_to_atom(TokenChars), TokenLine}}.
 
-\%.*\n           : skip_token.
+\%.*\n            : skip_token.
 
-andalso          : {token, {list_to_atom(TokenChars), TokenLine}}.
-orelse           : {token, {list_to_atom(TokenChars), TokenLine}}.
-fn               : {token, {list_to_atom(TokenChars), TokenLine}}.
-end              : {token, {list_to_atom(TokenChars), TokenLine}}.
-try              : {token, {list_to_atom(TokenChars), TokenLine}}.
-catch            : {token, {list_to_atom(TokenChars), TokenLine}}.
-of               : {token, {list_to_atom(TokenChars), TokenLine}}.
-after            : {token, {list_to_atom(TokenChars), TokenLine}}.
+andalso           : {token, {list_to_atom(TokenChars), TokenLine}}.
+orelse            : {token, {list_to_atom(TokenChars), TokenLine}}.
+fn                : {token, {list_to_atom(TokenChars), TokenLine}}.
+end               : {token, {list_to_atom(TokenChars), TokenLine}}.
+try               : {token, {list_to_atom(TokenChars), TokenLine}}.
+catch             : {token, {list_to_atom(TokenChars), TokenLine}}.
+of                : {token, {list_to_atom(TokenChars), TokenLine}}.
+after             : {token, {list_to_atom(TokenChars), TokenLine}}.
+receive           : {token, {list_to_atom(TokenChars), TokenLine}}.
+
 
 [a-z][0-9a-zA-Z_]*  : {token, {atom, TokenLine, list_to_atom(TokenChars)}}.
 
