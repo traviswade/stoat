@@ -49,6 +49,10 @@ case2 -?[
 
 if1 -?{ok, error}.
 
+bind1 -|> _*2 ~ Double
+	|> double
+	|> _+Double.
+
 
 
 	

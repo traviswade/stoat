@@ -13,7 +13,6 @@ compose_guards (GuardedArgs) ->
 maybe_wrap ([]) -> [];
 maybe_wrap (Guards) -> [Guards].
 	
-% TODO : looks like guards are coming out backward.
 compose_guards ([], {Args, Guards}) -> 
 	{lists:reverse(Args), Guards};
 compose_guards ([{Arg, GuardSpecs}|T], {AccArgs, AccGuards}) ->

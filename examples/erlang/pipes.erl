@@ -49,4 +49,7 @@ case2 (X__) ->
 
 if1 (X__) -> if X__ -> ok; true -> error end.
 
+bind1 (X__) -> Double = X__*2,
+	double(Double) + Double.
+
 

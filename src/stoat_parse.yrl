@@ -6,7 +6,7 @@ attribute attr_val
 expr exprs expr_100 expr_150 expr_160 expr_180 expr_200 expr_300 expr_400
 expr_500 expr_600 expr_700 expr_800 expr_max
 list_comprehension lc_expr lc_exprs
-binary_comprehension
+binary_comprehension try_expr try_catch try_clauses try_clause
 record_expr record_fields record_tuple record_field
 fun_expr fun_clause fun_clauses fun_clause_body
 fun_argument_list map_expr
@@ -35,6 +35,7 @@ char integer float atom string var
 '++' '--'
 '*' '/' 'div' 'rem' 'band' 'and' 'fn' 'end'
 'andalso' 'orelse'
+'try' 'catch' 'of' 'after'
 '+' '-' 'bor' 'bxor' 'bsl' 'bsr' 'or' 'xor' 'bnot' 'not'
 '='
 'when'
@@ -147,7 +148,7 @@ expr_max -> '(' expr ')' : '$2'.
 % expr_max -> case_expr : '$1'.
 % expr_max -> receive_expr : '$1'.
 expr_max -> fun_expr : '$1'.
-% expr_max -> try_expr : '$1'.
+expr_max -> try_expr : '$1'.
 
 list -> '[' ']' : {nil,?line('$1')}.
 list -> '[' expr tail : {cons,?line('$1'),'$2','$3'}.
@@ -305,9 +306,35 @@ guard -> exprs ';' guard : ['$1'|'$3'].
 
 
 
-
 % TODO : RECEIVE EXPRESSIONS
-% TODO : TRY, TRY-CATCH EXPRESSIONS
+
+
+
+try_expr -> 'try' exprs 'of' cr_clauses try_catch :
+	build_try(?line('$1'),'$2','$4','$5').
+try_expr -> 'try' exprs try_catch :
+	build_try(?line('$1'),'$2',[],'$3').
+
+try_catch -> 'catch' try_clauses 'end' :
+	{'$2',[]}.
+try_catch -> 'catch' try_clauses 'after' exprs 'end' :
+	{'$2','$4'}.
+try_catch -> 'after' exprs 'end' :
+	{[],'$2'}.
+
+try_clauses -> try_clause : ['$1'].
+try_clauses -> try_clause ';' try_clauses : ['$1' | '$3'].
+
+try_clause -> expr clause_guard clause_body :
+	L = ?line('$1'),
+	{clause,L,[{tuple,L,[{atom,L,throw},'$1',{var,L,'_'}]}],'$2','$3'}.
+try_clause -> atom ':' expr clause_guard clause_body :
+	L = ?line('$1'),
+	{clause,L,[{tuple,L,['$1','$3',{var,L,'_'}]}],'$4','$5'}.
+try_clause -> var ':' expr clause_guard clause_body :
+	L = ?line('$1'),
+	{clause,L,[{tuple,L,['$1','$3',{var,L,'_'}]}],'$4','$5'}.
+
 
 atomic -> char : '$1'.
 atomic -> integer : '$1'.
@@ -513,6 +540,8 @@ record_fields([Other|_Fields]) ->
     ret_err(?line(Other), "bad record field");
 record_fields([]) -> [].
 
+build_try(L,Es,Scs,{Ccs,As}) ->
+    {'try',L,Es,Scs,Ccs,As}.
 
 check_clauses(Cs, Name, Arity) -> [check_clause(C, Name, Arity) || C <- Cs].
 

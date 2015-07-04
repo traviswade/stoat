@@ -14,6 +14,14 @@ strings4 () -> [$a|"bc"].
 
 bin1 () -> <<"abc">>.
 
+trycatch1 () -> try x+1 catch _:_ -> badarg end.
+trycatch2 () ->
+	try x+1 of
+		A when is_integer(A) -> {ok, A};
+		_ -> error
+	catch error:badarith -> error
+	end.
+
 maps1 () -> #{a=>1}.
 maps2 (M) -> M#{b=>2}.
 
