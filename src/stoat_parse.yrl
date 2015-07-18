@@ -482,6 +482,10 @@ build_attribute({atom,L,export}, Val) ->
 	    {attribute,L,export,farity_list(ExpList)};
 	_Other -> ret_err(L, {badexport, Val})
     end;
+build_attribute({atom,L,def}, Val) ->
+	?p("regitering macro: ~p~n", [Val]),
+	stoat_macros:register(something, Val),
+    {atribute, dummy, ok};
 % build_attribute({atom,La,import}, Val) ->
 %     case Val of
 % 	[{atom,_Lm,Mod},ImpList] ->
