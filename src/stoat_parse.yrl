@@ -488,6 +488,7 @@ build_attribute({atom,L,export}, Val) ->
 	_Other -> ret_err(L, {badexport, Val})
     end;
 build_attribute({atom,L,def}, [K, V]) ->
+	?p("should be setting a macro, ~p~n", [{K, V}]),
 	stoat_macros:register_macro(K, V),
     {atribute, dummy, ok};
 % build_attribute({atom,La,import}, Val) ->

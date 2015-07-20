@@ -62,8 +62,8 @@ parse_toks ([H|T], {AccForm, AccForms}) ->
 	% ?p("parsing form: ~p~n~p~n~p~n~n~n", [H, AccForm, AccForms]),
 	parse_toks(T, {[H|AccForm], AccForms}).
 	
-parse_forms (ReversedForms) -> parse_forms(ReversedForms, []).
-parse_forms ([], Acc) -> proc_forms(Acc);
+parse_forms (ReversedForms) -> parse_forms(lists:reverse(ReversedForms), []).
+parse_forms ([], Acc) -> proc_forms(lists:reverse(Acc));
 parse_forms ([H|T], Acc) -> 
 	% ?p("trying to parse form: ~p~n", [H]),
 	{ok, Form} = stoat_parse:parse(H),
