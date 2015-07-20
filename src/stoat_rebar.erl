@@ -1,7 +1,6 @@
 -module(stoat_rebar).
 
 -export([compile/2]).
--include_lib("stoat.hrl").
 
 compile(Config, _AppFile) ->
 	Targ = filename:join(rebar_utils:get_cwd(), "src"),
@@ -15,6 +14,5 @@ compile(Config, _AppFile) ->
 % TODO: JUST COMPILING EVERY TIME! USE MAKE OR CHECK TIMESTAMPS
 compile_file (Path) ->
 	Outpath = stoat_util:ebin_dir(Path),
-	?p("we are : ~p~n", [self()]),
 	filelib:ensure_dir(filename:join([Outpath, "out.ebin"])),
 	stoat:compile(Path, #{outpath => Outpath}).

@@ -50,6 +50,8 @@ parse_file (Path) ->
 	{ok, Bin} = file:read_file(Path),
 	Str = binary_to_list(Bin),
 	{ok, Toks, Eof} = stoat_lex:string(Str),
+	% THIS SHOULD NOT BE REQUIRED HERE (?)
+	stoat_macros:register_module(path2module(Path)),
 	{ok, file_attrs(Path) ++  parse_toks(Toks) ++ [{eof, Eof}]}.
 	
 parse_toks (Toks) -> parse_toks(Toks, {[], []}).
@@ -57,18 +59,21 @@ parse_toks ([], {[], AccForms}) -> parse_forms(AccForms);
 parse_toks ([{dot, _}=Dot|T], {AccForm, AccForms}) ->
 	parse_toks(T, {[], [lists:reverse([Dot|AccForm])|AccForms]});
 parse_toks ([H|T], {AccForm, AccForms}) ->
-	% ?p("parsing form: ~p~n~p~n~p~n888888888888888888~n~n", [H, AccForm, AccForms]),
+	% ?p("parsing form: ~p~n~p~n~p~n~n~n", [H, AccForm, AccForms]),
 	parse_toks(T, {[H|AccForm], AccForms}).
 	
 parse_forms (ReversedForms) -> parse_forms(ReversedForms, []).
 parse_forms ([], Acc) -> proc_forms(Acc);
 parse_forms ([H|T], Acc) -> 
+	% ?p("trying to parse form: ~p~n", [H]),
 	{ok, Form} = stoat_parse:parse(H),
 	parse_forms(T, [Form|Acc]).
 	
+path2module (Path) -> list_to_atom(filename:rootname(filename:basename(Path))).
+	
 file_attrs (Path) ->
 	[ {attribute,1,file,{Path,1}},
-	     {attribute,2,module,list_to_atom(filename:rootname(filename:basename(Path)))}
+	     {attribute,2,module, path2module(Path)}
 		% {attribute, 3, compile, export_all}
 		].
 	

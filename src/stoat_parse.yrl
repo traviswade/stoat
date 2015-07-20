@@ -4,7 +4,8 @@ Nonterminals
 form
 attribute attr_val
 expr exprs expr_100 expr_150 expr_160 expr_180 expr_200 expr_300 expr_400
-expr_500 expr_600 expr_700 expr_800 expr_max
+expr_500 expr_600 expr_650 expr_700 expr_800 expr_max
+macro
 list_comprehension lc_expr lc_exprs
 binary_comprehension try_expr try_catch try_clauses try_clause
 record_expr record_fields record_tuple record_field
@@ -32,6 +33,7 @@ char integer float atom string var
 '<=' '||' '=>' '&' '#' '.' ':='
 '|>' '|+' '|-' '|)' '|/' '|<' '|:' '~' '|{' '.{' '?[' '?{'
 '::'
+'?'
 '==' '=:=' '=/=' '<' '>' '>=' '=<' '/='
 '++' '--'
 '*' '/' 'div' 'rem' 'band' 'and' 'fn' 'end'
@@ -124,10 +126,10 @@ expr_500 -> expr_600 : '$1'.
 
 expr_600 -> prefix_op expr_700 : ?mkop1('$1', '$2').
 expr_600 -> map_expr : '$1'.
-expr_600 -> expr_700 : '$1'.
+expr_600 -> expr_650 : '$1'.
 
-% expr_650 -> pipe : stoat_pipes:transform('$1').
-% expr_650 -> expr_700 : '$1'.
+expr_650 -> macro : '$1'.
+expr_650 -> expr_700 : '$1'.
 
 expr_700 -> function_call : '$1'.
 expr_700 -> record_expr : '$1'.
@@ -420,6 +422,9 @@ pipe_bindings -> '$empty' : [].
 pipe_bindings -> pipe_binding pipe_bindings : ['$1'|'$2'].
 pipe_binding -> '~' expr_700 : {'$2', ?line('$1')}.
 
+% no this probably doesn't belong in the parser.
+macro -> '?' expr_700 : stoat_macros:expand_macro('$2').
+
 Erlang code.
 
 -define(tokch(Tup), element(3, Tup)).
@@ -482,9 +487,8 @@ build_attribute({atom,L,export}, Val) ->
 	    {attribute,L,export,farity_list(ExpList)};
 	_Other -> ret_err(L, {badexport, Val})
     end;
-build_attribute({atom,L,def}, Val) ->
-	?p("regitering macro: ~p~n", [Val]),
-	stoat_macros:register(something, Val),
+build_attribute({atom,L,def}, [K, V]) ->
+	stoat_macros:register_macro(K, V),
     {atribute, dummy, ok};
 % build_attribute({atom,La,import}, Val) ->
 %     case Val of
