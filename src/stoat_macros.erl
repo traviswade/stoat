@@ -23,29 +23,22 @@ register_module (Mod) ->
 	put(macros, #{}).
 
 register_macro ({atom, _L, K}, V) ->
-	?p("setting macro: ~p TO ~p (~p)~n", [K, V, get(mod)]),
-	put(macros, maps:put(K, V, get(macros))).
-% register_macro ({call, _L, {atom, _, K}, Args}, V) ->
-% 	?p("setting call macro: ~p~n", [K]),
-% 	put(macros, maps:put({K, length(Args)}, V, get(macros))).
-
-
+	put(macros, maps:put(K, V, get(macros)));
+register_macro ({call, _L, {atom, _, K}, Args}, V) ->
+	put(macros, maps:put({K, length(Args)}, {V, Args}, get(macros))).
 	
 expand_macro ({atom, _L, K}) ->
-	get_macro(K).
-% expand_macro ({call, _L, {atom, _, K}, Args}) ->
-% 	Expr = get_macro({K, length(Args)}),
-% 	lists:reduce(
-% 		fun (Arg, {N, Acc}) -> 
-% 			{N+1, stoat_cuts:replace_var(Arg, Acc, ?is(varname(N)))} end, 
-% 		Expr, 
-% 		{1, Args}).
-		
-varname (N) -> list_to_atom("__macro_var_"++integer_to_list(N)).
-	
+	get_macro(K);
+expand_macro ({call, _L, {atom, _, K}, Args}) ->
+	{Expr, OrigArgs} = get_macro({K, length(Args)}),
+	lists:foldl(
+		fun ({Arg, {var, _, Orig}}, Acc) -> 
+			element(2, stoat_cuts:replace_var(Arg, Acc, ?is(Orig))) end, 
+		Expr, 
+		lists:zip(Args, OrigArgs)).
+			
 get_macro (K) -> 
 	try 
-		?p("getting macro ~p from ~p (~p)~n", [K, get(macros), get(mod)]),
 		maps:get(K, get(macros))
 	catch _:_ ->
 		throw(badmacro)
