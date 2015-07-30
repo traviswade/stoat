@@ -9,11 +9,13 @@ Currently it uses leex and yecc to target erl syntax trees, which can then be co
 
 ### Major features
 
-[Pipes]()
+See linked examples.
 
-[Cuts and underscore substitution]()
+[Pipes](examples/stoat/pipes.st)
 
-[Function and guard syntax]()
+[Cuts and underscore substitution](examples/stoat/cuts.st)
+
+[Function](examples/stoat/funs.st) and [guard](examples/stoat/guards.st) syntax
 
 [Mixins]()
 
