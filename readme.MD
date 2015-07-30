@@ -11,17 +11,17 @@ Currently it uses leex and yecc to target Erlang syntax trees, which can then be
 
 ### Major features
 
-#### [Pipes]()
+Pipes]()
 
-#### [Cuts and underscore substitution]()
+Cuts and underscore substitution]()
 
-#### [Function and guard syntax]()
+Function and guard syntax]()
 
-#### [Mixins]()
+Mixins]()
 
-#### [String interpolation]
+String interpolation]*
 
-### [Major shortcomings]()
+Major shortcomings]()
 
 ### Use
 
