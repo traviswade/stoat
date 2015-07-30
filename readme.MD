@@ -9,7 +9,7 @@ Currently Stoat uses [leex](http://erlang.org/doc/man/leex.html) and [yecc](http
 
 ### Major features
 
-See linked examples.
+See linked examples and their [Erlang equivalents](examples/erlang).
 
 [Pipes](examples/stoat/pipes.st)
 
