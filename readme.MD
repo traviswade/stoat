@@ -1,9 +1,7 @@
 
-Stoat is an Erlang-like language for the Erlang VM.
-
 ### Background and motivation
 
-Stoat is an overgrown set of ill-advised Erlang parse transforms. It adds a variety of features to the language, complicating its syntax unnecessarily and
+Stoat is an overgrown set of ill-advised Erlang parse transforms. It adds a variety of features to the language, complicating its syntax unnecessarily and promoting questionable practices.
 
 Most of the features involve patterns for creating, combining, applying and representing functions that are built in or easily expressed in other functional(-ish) languages but clunky in Erlang; there are some more general additions as well.
 
@@ -19,7 +17,7 @@ Currently it uses leex and yecc to target Erlang syntax trees, which can then be
 
 [Mixins]()
 
-[String interpolation]*
+[String interpolation]()
 
 ### Major shortcomings
 
