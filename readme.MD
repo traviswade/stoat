@@ -19,13 +19,19 @@ Currently it uses leex and yecc to target erl syntax trees, which can then be co
 
 [String interpolation]()
 
-### Major shortcomings
+### Coming soon
+
+Complete language features.
+
+Proper preprocessor.
+
+REPL.
 
 ### Use
 
-Do not use.
+Not ready for use.
 
 ### License
 
-Do not use.
+Do not use. Not ready.
 
