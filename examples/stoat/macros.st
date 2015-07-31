@@ -4,6 +4,8 @@
 -def(appl1(A, B), A(B)).
 -def(appl2(A, B), B(A)).
 
+-incl(common).
+
 use1 () -> ?a.
 
 wrap () -> ?wrap(1).

@@ -51,7 +51,7 @@ parse_file (Path) ->
 	Str = binary_to_list(Bin),
 	{ok, Toks, Eof} = stoat_lex:string(Str),
 	% THIS SHOULD NOT BE REQUIRED HERE (?)
-	stoat_macros:register_module(path2module(Path)),
+	stoat_macros:register_module(Path, path2module(Path)),
 	{ok, file_attrs(Path) ++  parse_toks(Toks) ++ [{eof, Eof}]}.
 	
 parse_toks (Toks) -> parse_toks(Toks, {[], []}).

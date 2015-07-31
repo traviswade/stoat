@@ -28,7 +28,7 @@ add_op mult_op prefix_op list_op comp_op
 pipe pipe_op pipe_call pipe_calls pipe_bindings pipe_binding.
 
 Terminals
-char integer float atom string var
+char integer float atom string sstring var
 '(' ')' ',' '->' '{' '}' '[' ']' '<-' ';' '|' '<<' '>>' ':' '!'
 '<=' '||' '=>' '&' '#' '.' ':='
 '|>' '|+' '|-' '|)' '|/' '|<' '|:' '~' '|{' '.{' '?[' '?{'
@@ -345,6 +345,7 @@ atomic -> strings : '$1'.
 
 
 strings -> string : '$1'.
+strings -> sstring : {string, ?line('$1'), ?tokch('$1')}.
 % what is this for?
 strings -> string strings :
 	{string,?line('$1'),?tokch('$1') ++ ?tokch('$2')}.
@@ -488,9 +489,11 @@ build_attribute({atom,L,export}, Val) ->
 	_Other -> ret_err(L, {badexport, Val})
     end;
 build_attribute({atom,L,def}, [K, V]) ->
-	?p("should be setting a macro, ~p~n", [{K, V}]),
 	stoat_macros:register_macro(K, V),
-    {atribute, dummy, ok};
+    {attribute, dummy, ok};
+build_attribute({atom, L, incl}, [{_Stringable, _L, F}]) ->
+	stoat_macros:handle_incl(F),
+	{attribute, dummy, ok};
 % build_attribute({atom,La,import}, Val) ->
 %     case Val of
 % 	[{atom,_Lm,Mod},ImpList] ->

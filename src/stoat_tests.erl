@@ -11,7 +11,7 @@
 	
 examples_test () ->
 	{ok, Fils} = file:list_dir(?relpth++"examples/stoat/"),
-	[test_example(hd(string:tokens(F, "."))) || F <- Fils].
+	[test_example(F) || [F, "st"] <- [string:tokens(F, ".") || F <- Fils]].
 
 test_example (Fil) ->
 	error_logger:info_msg("processing file: ~p~n", [Fil]),
