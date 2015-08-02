@@ -11,7 +11,7 @@ Rules.
 [A-Z_@][0-9a-zA-Z_]* : {token, {var, TokenLine, list_to_atom(TokenChars)}}.
 
 "([^"\\]|\\.)*"      : {token, {string, TokenLine, strip(TokenChars, TokenLen)}}.
-`([^"\\]|\\.)*`      : {token, {sstring, TokenLine, strip(TokenChars, TokenLen)}}.
+`([^`\\]|\\.)*`      : {token, {sstring, TokenLine, strip(TokenChars, TokenLen)}}.
 
 
 \.{               : {token, {list_to_atom(TokenChars), TokenLine}}.

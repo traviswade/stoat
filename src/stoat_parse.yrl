@@ -345,7 +345,7 @@ atomic -> strings : '$1'.
 
 
 strings -> string : '$1'.
-strings -> sstring : {string, ?line('$1'), ?tokch('$1')}.
+strings -> sstring : stoat_strings:interpolate('$1').
 % what is this for?
 strings -> string strings :
 	{string,?line('$1'),?tokch('$1') ++ ?tokch('$2')}.

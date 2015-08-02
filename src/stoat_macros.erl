@@ -51,8 +51,8 @@ get_macro (K) ->
 handle_incl (F) ->
 	case maps:find(F, get(macros)) of
 		error ->
-			F1 = misc:to_l(F) ++ ".ht",
-			?p("running macro: ~p (~p)~n", [F, misc:find_file(misc:to_l(F1), get(path))]);
+			F1 = stoat_util:to_l(F) ++ ".ht",
+			?p("running macro: ~p (~p)~n", [F, stoat_util:find_file(stoat_util:to_l(F1), get(path))]);
 		{ok, _} ->
 			?p("already ran macro ~p~n", F)
 		end.

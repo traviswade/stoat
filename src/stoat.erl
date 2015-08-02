@@ -27,12 +27,12 @@ cli () -> stoatcli:start().
 file_to_erl (Path) ->
 	{ok, Forms} = parse_file(Path),
 	Rootname = filename:rootname(Path),	
-	misc:with_file(Rootname++".forms", fun (W) ->
+	stoat_util:with_file(Rootname++".forms", fun (W) ->
 		[W(io_lib:format("~p~n~n", [F])) || F <- Forms] end),
 	Forms1 = proc_forms(Forms),
-	misc:with_file(Rootname++"1.forms", fun (W) ->
+	stoat_util:with_file(Rootname++"1.forms", fun (W) ->
 		[W(io_lib:format("~p~n~n", [F])) || F <- Forms1] end),
-	misc:with_file(Rootname++".erl", fun (W) ->
+	stoat_util:with_file(Rootname++".erl", fun (W) ->
 		[W(erl_prettypr:format(F) ++ ?br) || F <- Forms1] end),
 	ok.
 	
