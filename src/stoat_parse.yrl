@@ -307,9 +307,6 @@ guard -> exprs ';' guard : ['$1'|'$3'].
 
 
 
-% TODO : RECEIVE EXPRESSIONS
-
-
 
 try_expr -> 'try' exprs 'of' cr_clauses try_catch :
 	build_try(?line('$1'),'$2','$4','$5').

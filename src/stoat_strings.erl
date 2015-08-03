@@ -9,22 +9,31 @@
 interpolate ({sstring, L, S}) -> 
 	case re:run(S, "#{.*}", [global, ungreedy]) of
 		nomatch -> 
-			?p("no replacements to make : ~p~n", [S]),
 			{string, L, S};
 		{match, Matches} ->
-			?p("would be doing some replacement:  ~p (~p)~n", [S, Matches]),
-			?p("replacements: ~p~n", [make_replacements(Matches, L, S, {0, []})]),
-			{string, L, S}
+			% ?p("replacements: ~p~n", [do_repl(Matches, L, S, {0, []})]),
+			% {string, L, S}
+			do_repl(Matches, L, S, {0, []})
 	end.
 	
 	
-make_replacements ([], L, S, {Prev, Acc}) -> 
-	% finish him
-	lists:reverse([{string, L, sublist(S, Prev+1, length(S))}|Acc]);
-make_replacements ([[{Start,Len}]|T], L, S, {Prev, Acc}) ->
-	make_replacements(T, L, S,
+do_repl ([], L, S, {Prev, Acc}) -> 
+	finish_repl(L, Acc, {string, L, sublist(S, Prev+1, length(S))});
+do_repl ([[{Start,Len}]|T], L, S, {Prev, Acc}) ->
+	do_repl(T, L, S,
 		{Start+Len, 
-			[{eval, L, sublist(S, Start+3, Len-3)}, 
-			 {string, L, sublist(S, Prev+1, Start-Prev)} | Acc]}).
+			[{eval, sublist(S, Start+3, Len-3)}, 
+			 sublist(S, Prev+1, Start-Prev) | Acc]}).
+			
+finish_repl (L, [], Acc)            ->  Acc;
+finish_repl (L, [{eval, H}|T], Acc) ->  
+	Repl = {call, L,
+		{remote,1,{atom,1,stoat_util},{atom,1,to_l}},
+		[stoat_util:str2expr(H)]},
+	finish_repl(L, T, {op, L, '++', Repl, Acc});
+finish_repl (L, [Str|T], Acc)       ->  
+	finish_repl(L, T, {op, L, '++', {string, L, Str}, Acc}).
+			
+
 
 
