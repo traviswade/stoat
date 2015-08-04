@@ -11,13 +11,14 @@ binary_comprehension try_expr try_catch try_clauses try_clause
 record_expr record_fields record_tuple record_field
 fun_expr fun_clause fun_clauses fun_clause_body
 fun_argument_list map_expr
+curried_args
 receive_expr
 map_tuple map_fields map_field map_field_assoc map_field_exact map_key
 atom_or_var integer_or_var
 function function_clauses function_clause function_name
 argument_list arg_exprs arg_expr arg_guards
 cr_clauses cr_clause
-clause_args clause_guard clause_body
+clause_args clause_body
 guard
 function_call call_argument_list trailing_closure
 tuple
@@ -66,13 +67,21 @@ function -> function_clauses : build_function('$1').
 function_clauses -> function_clause : ['$1'].
 function_clauses -> function_clause ';' function_clauses : ['$1'|'$3'].
 
-function_clause -> atom clause_args clause_guard clause_body : 
+function_clause -> atom clause_args clause_body : 
 	{Args, Guards} = stoat_guards:compose_guards('$2'),
-	{clause, ?line('$1'), ?tokch('$1'), Args, stoat_guards:maybe_wrap(Guards), '$4'}.
+	{clause, ?line('$1'), ?tokch('$1'), Args, stoat_guards:maybe_wrap(Guards), '$3'}.
+function_clause -> atom curried_args clause_body :
+	[H|T] = '$2',
+	{Args, Guards} = stoat_guards:compose_guards([H]),
+	{clause, ?line('$1'), ?tokch('$1'), Args, stoat_guards:maybe_wrap(Guards), curry_body(T, '$3')}.
+	
+
+
+	
 % will fail in build_function in first position
-function_clause -> clause_args clause_guard clause_body :
+function_clause -> clause_args  clause_body :
 	{Args, Guards} = stoat_guards:compose_guards('$1'),
-	{noname_clause, ?line(hd('$3')), noname, Args, stoat_guards:maybe_wrap(Guards), '$3'}.
+	{noname_clause, ?line(hd('$2')), noname, Args, stoat_guards:maybe_wrap(Guards), '$2'}.
 	
 	
 function_clause -> atom '-' pipe_calls : 
@@ -84,14 +93,11 @@ function_clause -> atom '-' pipe_calls :
 	
 	
 clause_args -> argument_list : element(1, '$1').
+curried_args ->  '[' ']' : [].
+curried_args ->  '[' arg_exprs ']' : '$2'.
 
-
-
-clause_guard -> 'when' guard : '$2'.
-clause_guard -> '$empty' : [].
 
 clause_body -> '->' exprs: '$2'.
-
 
 
 % expr -> 'catch' expr : {'catch',?line('$1'),'$2'}.
@@ -268,14 +274,14 @@ integer_or_var -> var : '$1'.
 fun_clauses -> fun_clause : ['$1'].
 fun_clauses -> fun_clause ';' fun_clauses : ['$1' | '$3'].
 
-fun_clause -> fun_argument_list clause_guard fun_clause_body :
+fun_clause -> fun_argument_list fun_clause_body :
 	{Args,Pos} = '$1',
 	% note the empty clause guard is completely ignored for now
 	{Args1, Guards} = stoat_guards:compose_guards(Args),
-	{clause,Pos,'fun',Args1, Guards,'$3'}.
+	{clause,Pos,'fun',Args1, Guards,'$2'}.
 		
-fun_clause -> var argument_list clause_guard fun_clause_body :
-	{clause,element(2, '$1'),element(3, '$1'),element(1, '$2'),'$3','$4'}.
+fun_clause -> var argument_list fun_clause_body :
+	{clause,element(2, '$1'),element(3, '$1'),element(1, '$2'), [],'$3'}.
 	
 fun_clause_body -> '|' exprs: '$2'.
 	
@@ -323,15 +329,15 @@ try_catch -> 'after' exprs 'end' :
 try_clauses -> try_clause : ['$1'].
 try_clauses -> try_clause ';' try_clauses : ['$1' | '$3'].
 
-try_clause -> expr clause_guard clause_body :
+try_clause -> expr clause_body :
 	L = ?line('$1'),
-	{clause,L,[{tuple,L,[{atom,L,throw},'$1',{var,L,'_'}]}],'$2','$3'}.
-try_clause -> atom ':' expr clause_guard clause_body :
+	{clause,L,[{tuple,L,[{atom,L,throw},'$1',{var,L,'_'}]}],[],'$2'}.
+try_clause -> atom ':' expr clause_body :
 	L = ?line('$1'),
-	{clause,L,[{tuple,L,['$1','$3',{var,L,'_'}]}],'$4','$5'}.
-try_clause -> var ':' expr clause_guard clause_body :
+	{clause,L,[{tuple,L,['$1','$3',{var,L,'_'}]}], [],'$4'}.
+try_clause -> var ':' expr clause_body :
 	L = ?line('$1'),
-	{clause,L,[{tuple,L,['$1','$3',{var,L,'_'}]}],'$4','$5'}.
+	{clause,L,[{tuple,L,['$1','$3',{var,L,'_'}]}], [],'$4'}.
 
 
 atomic -> char : '$1'.
@@ -398,9 +404,9 @@ pipe_call -> '?{' expr ',' expr '}' : { '?{', '$2', '$4', ?line('$1')}.
 
 cr_clauses -> cr_clause : ['$1'].
 cr_clauses -> cr_clause ';' cr_clauses : ['$1' | '$3'].
-cr_clause -> arg_expr clause_guard clause_body :
+cr_clause -> arg_expr clause_body :
 	{[Item], Guards} = stoat_guards:compose_guards(['$1']),
-	{clause, ?line(Item), [Item], Guards,'$3'}.
+	{clause, ?line(Item), [Item], Guards,'$2'}.
 
 receive_expr -> 'receive' cr_clauses 'end' :
 	{'receive',?line('$1'),'$2'}.
@@ -566,6 +572,13 @@ check_clause ({noname_clause, L, _, As, G, B}, Name, Arity) when length(As) =:= 
 		{clause, L, As, G, B};
 check_clause ({clause,L,_N,_As,_G,_B}, _, _) ->
 		ret_err(L, "head mismatch").
+		
+curry_body ([], Body)    -> Body;
+curry_body ([H|T], Body) ->
+	{Arg, Guards} = stoat_guards:compose_guards([H]),
+	[{'fun', ?line(hd(Arg)),
+	       {clauses, [{clause, ?line(H), Arg, 
+				stoat_guards:maybe_wrap(Guards), curry_body(T, Body)}]}}].
 		
 ret_err(L, S) ->
     {location,Location} = get_attribute(L, location),

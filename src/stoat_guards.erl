@@ -20,7 +20,7 @@ compose_guards ([{Arg, GuardSpecs}|T], {AccArgs, AccGuards}) ->
 	% compose_guards(T, {[Arg|AccArgs], []}).
 	
 proc_guard (Arg, {atom, Line, Atom}) ->
-	F = list_to_atom("is_" ++ atom_to_list(Atom)),
+	F = list_to_atom(make_predicate(Atom)),
 	{var, _, Arg1} = stoat_cuts:find_var(Arg),
 	{call,Line,{atom, Line, F},[{var,Line,Arg1}]};
 proc_guard (Arg, Expr) ->
@@ -28,3 +28,7 @@ proc_guard (Arg, Expr) ->
 		{true, Expr1} -> Expr1;
 		_ -> throw("bad guard expression")
 	end.
+	
+make_predicate (int) -> "is_integer";
+make_predicate (Atom) ->
+	"is_" ++ atom_to_list(Atom).

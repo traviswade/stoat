@@ -15,13 +15,13 @@ See linked examples and their [Erlang equivalents](examples/erlang).
 
 [Cuts and underscore substitution](examples/stoat/cuts.st)
 
-[Curried functions](examples/stoat/curry.st)
+[Plain old curried functions](examples/stoat/curry.st)
 
 [Function](examples/stoat/funs.st) and [guard](examples/stoat/guards.st) syntax
 
 [Mixins]()
 
-[String interpolation]()
+[String interpolation](examples/stoat/stringinterp.st)
 
 ### Coming soon
 
