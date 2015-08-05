@@ -12,3 +12,6 @@ wrap () -> ?wrap(1).
 
 appl1 () -> ?appl1({X | X+1}, 1).
 appl2 () -> ?appl2(1, {X | X+1}).
+
+remote1 () -> ?somethingcommon.
+remote2 (X) -> ?commonf(X).

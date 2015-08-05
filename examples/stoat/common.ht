@@ -1,2 +1,3 @@
 
 -def(somethingcommon, 1).
+-def(commonf(X), {ok, X}).
