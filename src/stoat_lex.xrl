@@ -15,7 +15,7 @@ Rules.
 
 
 \.{               : {token, {list_to_atom(TokenChars), TokenLine}}.
-\.                : {token, {dot, TokenLine}}.
+\.                : {end_token, {dot, TokenLine}}.
 \|\+              : {token, {list_to_atom(TokenChars), TokenLine}}.
 \|-               : {token, {list_to_atom(TokenChars), TokenLine}}.
 \|>               : {token, {list_to_atom(TokenChars), TokenLine}}.

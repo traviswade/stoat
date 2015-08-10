@@ -89,6 +89,7 @@ show (Str) ->
 	?p("parsed: ~p~n", [Parsed]),
 	Parsed.
 	
+version () -> "0.1".
 	
 %%%%%%%%%%%%%%% 
 proc_forms (Forms) ->
