@@ -431,6 +431,7 @@ macro -> '?' expr_700 : stoat_macros:expand_macro('$2').
 
 Erlang code.
 
+
 -define(tokch(Tup), element(3, Tup)).
 -define(line(Tup), element(2, Tup)).
 -define(mkop1(OpPos, A),
@@ -446,13 +447,20 @@ Erlang code.
 -define(p, error_logger:info_msg).
 
 %%%%%%%%%%%%%%%%%%% API %%%%%%%%%%%
--export([parse_expr/1]).
+-export([parse_expr/1, parse_exprs/1]).
 parse_expr(Tokens) ->
     case parse([{atom,0,f},{'(',0},{')',0},{'->',0}|Tokens]) of
 		{ok,{function,_Lf,f,0,[{clause,_Lc,[],[],[Expr]}]}} ->
 		    {ok,Expr};
 		{error,_} = Err -> Err;
 		{ok, Other} -> {error, notexpr, other}
+    end.
+
+parse_exprs(Tokens) ->
+    case parse([{atom,0,f},{'(',0},{')',0},{'->',0}|Tokens]) of
+	{ok,{function,_Lf,f,0,[{clause,_Lc,[],[],Exprs}]}} ->
+	    {ok,Exprs};
+	{error,_} = Err -> Err
     end.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
