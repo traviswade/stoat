@@ -501,10 +501,16 @@ build_attribute({atom,L,export}, Val) ->
     end;
 build_attribute({atom,L,def}, [K, V]) ->
 	stoat_macros:register_macro(K, V),
-    {attribute, dummy, ok};
+    {attribute, registered_macro, ok};
 build_attribute({atom, L, incl}, [{_Stringable, _L, F}]) ->
 	stoat_macros:handle_incl(F),
-	{attribute, dummy, ok};
+	{attribute, handled_include, ok};
+	
+build_attribute	({atom, L, mixin}, [{_Stringable, _L, M}]) ->
+	% stoat_macros:handle_incl(F),
+	{attribute, mixin, M};
+
+	
 % build_attribute({atom,La,import}, Val) ->
 %     case Val of
 % 	[{atom,_Lm,Mod},ImpList] ->
