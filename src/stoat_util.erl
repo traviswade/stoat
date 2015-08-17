@@ -3,6 +3,8 @@
 -export([with_file/2, to_l/1, find_file/2,
 	str2expr/1, erlstr2expr/1, no_lines/1, 
 	form2erl/1, line/1, ebin_dir/1]).
+	
+-include_lib("stoat.hrl").
 
 with_file (Fnam, Fun) ->
 	{ok, F} = file:open(Fnam, [write]),
@@ -26,7 +28,7 @@ find_file ([F|T], Name, Dir)    ->
 	Path = filename:join([Dir, F]),
 	case filelib:is_dir(Path) of
 		true ->
-			case find_file(Name, Dir) of
+			case find_file(Name, Path) of
 				error -> find_file(T, Name, Dir);
 				Found  -> Found
 			end;

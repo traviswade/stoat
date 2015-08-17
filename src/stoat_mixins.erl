@@ -13,25 +13,24 @@
 %                                [{clause,7,[],[],[{atom,7,ok}]}]}]
 
 
-transform (Forms, Path) ->
-	% ?p("transforming forms: ~p~n", [forms_to_mixin(Forms, #mixin{})]),
-	ensure_processed(Forms, Path),
+transform (Forms, Opts) ->
+	ensure_processed(Forms, Opts),
 	Forms.
 	
 ensure_processed ([], _) -> ok;
-ensure_processed ([{attribute, mixin, Mod}|T], Path) ->
-	proc_mixin(Mod, Path),
-	ensure_processed(T, Path);
-ensure_processed ([H|T], Path) -> ensure_processed(T, Path).
+ensure_processed ([{attribute, mixin, Mod}|T], Opts) ->
+	proc_mixin(Mod, Opts),
+	ensure_processed(T, Opts);
+ensure_processed ([H|T], Opts) -> ensure_processed(T, Opts).
 	
-proc_mixin (Mod, Path) ->
+proc_mixin (Mod, Opts) ->
+	Path = filename:dirname(maps:get(path, Opts)),
 	catch ets:new(mixins, [set, named_table, public]),
 	case ets:lookup(mixins, Mod) of
 		[_] -> ok;
 		[] ->
-			?p("looking for file ~p In ~p~n", [stoat_util:to_l(Mod)++".st", Path]),
 			Fil = stoat_util:find_file(stoat_util:to_l(Mod)++".st", Path),
-			{ok, Forms} = stoat:parse_file(Path),
+			{ok, Forms} = stoat:parse_file(Fil),
 			catch ets:insert(mixins, {Mod, forms_to_mixin(Forms, #mixin{})})
 	end.
 	
