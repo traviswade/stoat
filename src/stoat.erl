@@ -29,7 +29,7 @@ file_to_erl (Path) ->
 	Rootname = filename:rootname(Path),	
 	stoat_util:with_file(Rootname++".forms", fun (W) ->
 		[W(io_lib:format("~p~n~n", [F])) || F <- Forms] end),
-	Forms1 = proc_forms(Forms),
+	Forms1 = proc_forms(Forms, #{path=>Path}),
 	stoat_util:with_file(Rootname++"1.forms", fun (W) ->
 		[W(io_lib:format("~p~n~n", [F])) || F <- Forms1] end),
 	stoat_util:with_file(Rootname++".erl", fun (W) ->
@@ -52,7 +52,8 @@ parse_file (Path) ->
 	{ok, Toks, Eof} = stoat_lex:string(Str),
 	% THIS SHOULD NOT BE REQUIRED HERE (?)
 	stoat_macros:register_module(Path, path2module(Path)),
-	{ok, file_attrs(Path) ++  parse_toks(Toks) ++ [{eof, Eof}]}.
+	Opts = #{path=>Path},
+	{ok, file_attrs(Path) ++  proc_forms(parse_toks(Toks), Opts) ++ [{eof, Eof}]}.
 	
 parse_toks (Toks) -> parse_toks(Toks, {[], []}).
 parse_toks ([], {[], AccForms}) -> parse_forms(AccForms);
@@ -63,11 +64,13 @@ parse_toks ([H|T], {AccForm, AccForms}) ->
 	parse_toks(T, {[H|AccForm], AccForms}).
 	
 parse_forms (ReversedForms) -> parse_forms(lists:reverse(ReversedForms), []).
-parse_forms ([], Acc) -> proc_forms(lists:reverse(Acc));
+parse_forms ([], Acc) -> lists:reverse(Acc);
 parse_forms ([H|T], Acc) -> 
 	% ?p("trying to parse form: ~p~n", [H]),
 	{ok, Form} = stoat_parse:parse(H),
 	parse_forms(T, [Form|Acc]).
+	
+default_opts () -> #{path=>none}.
 	
 path2module (Path) -> list_to_atom(filename:rootname(filename:basename(Path))).
 	
@@ -92,7 +95,7 @@ show (Str) ->
 version () -> "0.1".
 	
 %%%%%%%%%%%%%%% 
-proc_forms (Forms) ->
-	lists:foldl(fun(Mod, Acc) -> Mod:transform(Acc) end, Forms, [
-		]). %stoat_inline_fun]).
+proc_forms (Forms, Opts) ->
+	lists:foldl(fun(Mod, Acc) -> Mod:transform(Acc, Opts) end, Forms, [
+		stoat_mixins]).
 		
