@@ -4,3 +4,5 @@
 
 frommixin2 () -> ok.
 frommixin1a (bad) -> notok.
+
+overriding(inmix2) -> -3.

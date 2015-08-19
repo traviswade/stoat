@@ -4,5 +4,6 @@
 -mixin(mixin1).
 -mixin(mixin2).
 
-
 some_internal () -> ok.
+
+overriding(intargmod) -> -1.

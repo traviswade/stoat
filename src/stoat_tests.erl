@@ -17,9 +17,9 @@ test_example (Fil) ->
 	error_logger:info_msg("processing file: ~p~n", [Fil]),
 	{ok, Stoat} = stoat:parse_file(?relpth ++ "examples/stoat/" ++ Fil ++ ".st"),
 	{ok, Erl} = epp:parse_file(?relpth ++ "examples/erlang/" ++ Fil ++ ".erl", []),
-	Fs = [{F, stoat_util:form2erl(F)} || {function, _,_,_,_}=F <- Stoat],
-	Fe = [{F, stoat_util:form2erl(F)} || {function, _,_,_,_}=F <- Erl],
-	% ?p("ok:: ST:~p~n~nERL:~p~n~n", [Fs, Fe]),
+	Fs = sort_by_name([{F, stoat_util:form2erl(F)} || {function, _,_,_,_}=F <- Stoat]),
+	Fe = sort_by_name([{F, stoat_util:form2erl(F)} || {function, _,_,_,_}=F <- Erl]),
+	length(Fs) =:= length(Fe),
 	lists:foreach(fun({{Fa, A}, {Fb, B}}) -> 
 			% ?p("testing: ~p~n~p~n~n---~n", [A, B]),
 			case A of B -> ok; _ ->
@@ -28,3 +28,8 @@ test_example (Fil) ->
 				end,
 			?assertEqual(A, B) 
 		end, lists:zip(Fs, Fe)).
+
+sort_by_name (Funs) ->
+	lists:sort(
+		fun ({A,_}, {B,_}) -> {element(3,A), element(4, A)} >= {element(3, B), element(4, B)} end, 
+		Funs).

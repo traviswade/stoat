@@ -76,7 +76,6 @@ function_clause -> atom curried_args clause_body :
 	{clause, ?line('$1'), ?tokch('$1'), Args, stoat_guards:maybe_wrap(Guards), curry_body(T, '$3')}.
 	
 
-
 	
 % will fail in build_function in first position
 function_clause -> clause_args  clause_body :
@@ -273,6 +272,9 @@ integer_or_var -> var : '$1'.
 
 fun_clauses -> fun_clause : ['$1'].
 fun_clauses -> fun_clause ';' fun_clauses : ['$1' | '$3'].
+
+
+
 
 fun_clause -> fun_argument_list fun_clause_body :
 	{Args,Pos} = '$1',

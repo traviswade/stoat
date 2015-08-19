@@ -6,3 +6,5 @@ frommixin1 () -> ok.
 frommixin1a (_) -> ok.
 
 f1 (_) -> default.
+
+overriding(inmix1) -> -2.

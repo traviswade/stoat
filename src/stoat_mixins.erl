@@ -21,23 +21,22 @@ transform (Forms, Opts) ->
 	mix_in_mixins(
 		gather_mixins(Forms, Opts, #mixin{}), 
 		Forms, 
-		forms_to_mixins(Forms), 
+		forms_to_mixin(Forms), 
 		[]).
 	 
-% fin.
-mix_in_mixins (#{functions=#{}}, [], _, AccForms) -> lists:reverse(AccForms);
 
 % exports. group all the exports together and place them where the FIRST export occurred.
-mix_in_mixins (#{exports=[_|_]=Exp}=Mixins, [{attribute, L, export, _}|T], #{exports=ExpOrig}=Formatted, AccForms) ->
+% (and discard any further export statements)
+mix_in_mixins (#mixin{exports=ignore}=Mixins, [{attribute, _, export, _}|T], Formatted, AccForms) ->
+	mix_in_mixins(Mixins, T, Formatted, AccForms);
+mix_in_mixins (#mixin{exports=Exp}=Mixins, 
+	[{attribute, L, export, _}|T], #mixin{exports=ExpOrig}=Formatted, AccForms) ->
 	mix_in_mixins(
-		Mixins#mixin{exports=[]}, 
+		Mixins#mixin{exports=ignore}, 
 		T, 
 		Formatted, 
 		[{attribute, L, export, lists:usort(Exp++ExpOrig)}|AccForms]);
-% (and discard any further export statements)
-mix_in_mixins (Mixins, [{attribute, _, export, _}|T], Formatted, AccForms) ->
-	mix_in_mixins(Mixins, T, Formatted, AccForms);
-	
+
 % a function. add any mixin clauses and remove it from the mixin set
 mix_in_mixins (#mixin{functions=Funs}=Mixins, [{function, L, FNam, Arity, Clauses}=F|T], Formatted, AccForms) ->
 	case maps:find({FNam, Arity}, Funs) of
@@ -46,21 +45,18 @@ mix_in_mixins (#mixin{functions=Funs}=Mixins, [{function, L, FNam, Arity, Clause
 				Mixins#mixin{functions=maps:without([{FNam, Arity}], Funs)},
 				T,
 				Formatted,
-				[{function, L, FNam, Arity, Clauses1++Clauses}|AccForms]);
-		error -> mix_in_mixins(Mixins, T, Formatted, [F|AccForms]);
+				[{function, L, FNam, Arity, Clauses++Clauses1}|AccForms]);
+		error -> mix_in_mixins(Mixins, T, Formatted, [F|AccForms])
+	end;
 		
 % anything else in the input forms. just add it as is.
 mix_in_mixins (Mixins, [Other|T], Formatted, AccForms) ->
 	mix_in_mixins(Mixins, T, Formatted, [Other|AccForms]);
 	
 % input forms are exhausted. add in the rest of the mixed in functions
-mix_in_mixins (#mixins{functions=Funs}=Mixins, [], Formatted, AccForms) ->
-	mix_in_mixins(
-		Mixins#{functions=#{}}, 
-		[], 
-		Formatted, 
-		maps:fold(
-			fun({FNam, Arity}, Cs, Acc) -> [{function, 0, Fnam, Arity, Cs}|Acc] end,
+mix_in_mixins (#mixin{functions=Funs}=Mixins, [], Formatted, AccForms) ->
+	lists:reverse(maps:fold(
+			fun({FNam, Arity}, Cs, Acc) -> [{function, 0, FNam, Arity, Cs}|Acc] end,
 			AccForms,
 			Funs)).
 
