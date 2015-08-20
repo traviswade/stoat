@@ -1,6 +1,6 @@
 %-
 look, a
-MULTILINE
+MULTI. LINE.
 comment!
 -%
 

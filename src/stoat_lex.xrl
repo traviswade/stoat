@@ -14,9 +14,7 @@ Rules.
 `([^`\\]|\\.)*`      : {token, {sstring, TokenLine, strip(TokenChars, TokenLen)}}.
 
 
-\.{               : {token, {list_to_atom(TokenChars), TokenLine}}.
-\.{S}             : {end_token, {dot, TokenLine}}.
-\.                : {token, {list_to_atom(TokenChars), TokenLine}}.
+
 \|\+              : {token, {list_to_atom(TokenChars), TokenLine}}.
 \|-               : {token, {list_to_atom(TokenChars), TokenLine}}.
 \|>               : {token, {list_to_atom(TokenChars), TokenLine}}.
@@ -47,6 +45,10 @@ Rules.
 
 \%.*\n            : skip_token.
 \%-([^\%\\]|\\.)*-\% : skip_token.
+
+\.{               : {token, {list_to_atom(TokenChars), TokenLine}}.
+\.{S}             : {end_token, {dot, TokenLine}}.
+\.                : {token, {list_to_atom(TokenChars), TokenLine}}.
 
 andalso           : {token, {list_to_atom(TokenChars), TokenLine}}.
 orelse            : {token, {list_to_atom(TokenChars), TokenLine}}.
