@@ -15,3 +15,13 @@ multiclause () ->
 	
 trailer () ->
 	m:f(1, fun(X) -> X + 1 end).
+	
+trailer1 () ->
+	m:f(fun(X) -> X + 1 end, 1).
+	
+anon_pipe () -> fun (X__) -> f(g(X__)) end.
+
+trailer_pipe () -> m:f(1, fun(X__) -> f(g(X__)) end).
+
+trailer_pipe2 () ->
+	m:f(fun(X__) -> f(g(X__)) end, 1).

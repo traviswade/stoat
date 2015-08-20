@@ -31,7 +31,7 @@ pipe pipe_op pipe_call pipe_calls pipe_bindings pipe_binding.
 Terminals
 char integer float atom string sstring var
 '(' ')' ',' '->' '{' '}' '[' ']' '<-' ';' '|' '<<' '>>' ':' '!'
-'<=' '||' '=>' '&' '#' '.' ':='
+'<=' '||' '=>' '&' '#' '.' ':=' '@'
 '|>' '|+' '|-' '|)' '|/' '|<' '|:' '~' '|{' '.{' '?[' '?{'
 '::'
 '?'
@@ -247,6 +247,9 @@ record_field -> atom '=' expr : {record_field,?line('$1'),'$1','$3'}.
 
 function_call -> expr_800 call_argument_list trailing_closure: 
 	{call, ?line('$1'),'$1', element(1, '$2') ++ '$3'}.
+	
+function_call -> expr_800 call_argument_list '@' trailing_closure:
+	{call, ?line('$1'), '$1', '$4' ++ element(1, '$2')}.
 
 function_call -> expr_800 fun_expr: 
 	{call, ?line('$1'), '$1', ['$2']}.
@@ -262,6 +265,11 @@ fun_expr -> 'fn' atom_or_var ':' atom_or_var '/' integer_or_var :
 % fun_expr -> short_fun_clause '}' : build_fun(?line('$1'), ['$1']).
 fun_expr -> '{' fun_clauses '}' : build_fun(?line('$1'), '$2').
 fun_expr -> '.{' expr '}' : stoat_cuts:expr2fun('$2').
+fun_expr -> 'fn' pipe_calls : 
+	L = ?line('$1'),
+	Arg = {var, L, '_'},
+	stoat_cuts:expr2fun(hd(stoat_pipes:transform({Arg, '$2', L}))).
+
 
 
 atom_or_var -> atom : '$1'.

@@ -1,3 +1,7 @@
+% look
+% no
+% multiline comments.
+
 -module(basic).
 
 -export([add/1]).
@@ -39,5 +43,6 @@ order (X, Y)            -> {X, Y}.
  
 -record(usr, {name, email}).
 name (#usr{name=N}) -> N.
+name1 (U) -> U#usr.name.
 
 noassign ({_}=A) -> 1.

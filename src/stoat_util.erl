@@ -37,7 +37,7 @@ find_file ([F|T], Name, Dir)    ->
 	end.
 
 str2expr (Str) ->
-	{ok, Toks, _} = stoat_lex:string(Str ++ "."),
+	{ok, Toks, _} = stoat_lex:string(Str ++ ".\n"),
 	{ok, Expr} = stoat_parse:parse_expr(Toks),
 	Expr.
 

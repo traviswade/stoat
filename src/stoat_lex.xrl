@@ -8,14 +8,15 @@ S = [\s\t\n]
 Rules.
 
 
-[A-Z_@][0-9a-zA-Z_]* : {token, {var, TokenLine, list_to_atom(TokenChars)}}.
+[A-Z_][0-9a-zA-Z_]* : {token, {var, TokenLine, list_to_atom(TokenChars)}}.
 
 "([^"\\]|\\.)*"      : {token, {string, TokenLine, strip(TokenChars, TokenLen)}}.
 `([^`\\]|\\.)*`      : {token, {sstring, TokenLine, strip(TokenChars, TokenLen)}}.
 
 
 \.{               : {token, {list_to_atom(TokenChars), TokenLine}}.
-\.                : {end_token, {dot, TokenLine}}.
+\.{S}             : {end_token, {dot, TokenLine}}.
+\.                : {token, {list_to_atom(TokenChars), TokenLine}}.
 \|\+              : {token, {list_to_atom(TokenChars), TokenLine}}.
 \|-               : {token, {list_to_atom(TokenChars), TokenLine}}.
 \|>               : {token, {list_to_atom(TokenChars), TokenLine}}.
@@ -26,6 +27,7 @@ Rules.
 \|{               : {token, {list_to_atom(TokenChars), TokenLine}}.
 \?\[              : {token, {list_to_atom(TokenChars), TokenLine}}.
 \?\{              : {token, {list_to_atom(TokenChars), TokenLine}}.
+@                 : {token, {list_to_atom(TokenChars), TokenLine}}.
 
 \?                : {token, {list_to_atom(TokenChars), TokenLine}}.
 
@@ -44,6 +46,7 @@ Rules.
 [+\-*/=:\&<>#~\!] : {token, {list_to_atom(TokenChars), TokenLine}}.
 
 \%.*\n            : skip_token.
+\%-([^\%\\]|\\.)*-\% : skip_token.
 
 andalso           : {token, {list_to_atom(TokenChars), TokenLine}}.
 orelse            : {token, {list_to_atom(TokenChars), TokenLine}}.
