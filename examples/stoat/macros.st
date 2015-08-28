@@ -1,4 +1,10 @@
 
+% macros look pretty much like in Erlang. Use the 
+% attributes 'def' and 'incl' to define and include.
+% Macros are currently evaluated at parse time.
+% Which is weird but has not much consequence for
+% simple macros.
+
 -def(a, 1).
 -def(wrap(A), {ok, A}).
 -def(appl1(A, B), A(B)).

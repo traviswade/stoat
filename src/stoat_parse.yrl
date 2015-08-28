@@ -21,12 +21,13 @@ cr_clauses cr_clause
 clause_args clause_body
 guard
 function_call call_argument_list trailing_closure
+partial_application
 tuple
 atomic strings list tail 
 binary bin_elements bin_element bit_size_expr 
 bit_expr opt_bit_size_expr opt_bit_type_list bit_type bit_type_list
 add_op mult_op prefix_op list_op comp_op 
-pipe pipe_op pipe_call pipe_calls pipe_bindings pipe_binding.
+pipe pipe_op pipe_call pipe_calls pipe_bindings pipe_binding pipe_end.
 
 Terminals
 char integer float atom string sstring var
@@ -58,12 +59,6 @@ attr_val -> '(' expr ',' exprs ')'   : ['$2' | '$4'].
 function -> function_clauses : build_function('$1').
 
 
-% fun_clause -> fun_argument_list clause_guard fun_clause_body :
-% 	{Args,Pos} = '$1',
-% 	% note the empty clause guard is completely ignored for now
-% 	{Args1, Guards} = stoat_guards:compose_guards(Args),
-% 	{clause,Pos,'fun',Args1, Guards,'$3'}.
-
 function_clauses -> function_clause : ['$1'].
 function_clauses -> function_clause ';' function_clauses : ['$1'|'$3'].
 
@@ -83,12 +78,12 @@ function_clause -> clause_args  clause_body :
 	{noname_clause, ?line(hd('$2')), noname, Args, stoat_guards:maybe_wrap(Guards), '$2'}.
 	
 	
-function_clause -> atom '-' pipe_calls : 
+function_clause -> atom arg_guards pipe_calls : 
 	L = ?line('$1'),
-	Arg = {var, L, 'X__'},
+	{[Arg], Guards} = stoat_guards:compose_guards([{{var, L, 'X__'}, '$2'}]),
 	Expr = stoat_pipes:transform({Arg, '$3', L}),
 	% flattening again. TODO: take care of this in the transform!
-	{clause, ?line('$1'), ?tokch('$1'), [Arg], [], lists:flatten(Expr)}.
+	{clause, ?line('$1'), ?tokch('$1'), [Arg], stoat_guards:maybe_wrap(Guards), lists:flatten(Expr)}.
 	
 	
 clause_args -> argument_list : element(1, '$1').
@@ -257,12 +252,10 @@ function_call -> expr_800 fun_expr:
 trailing_closure -> fun_expr : ['$1'].
 trailing_closure -> '$empty' : [].
 	
-
-fun_expr -> 'fn' atom_or_var ':' atom_or_var '/' integer_or_var :
+fun_expr -> '&' atom '/' integer :
+	{'fun',?line('$1'),{function,element(3, '$2'),element(3, '$4')}}.
+fun_expr -> '&' atom_or_var ':' atom_or_var '/' integer_or_var :
 	{'fun',?line('$1'),{function,'$2','$4','$6'}}.
-% fun_expr -> atom ':' atom '/' integer :
-% 	{'fun',?line('$1'),{function,'$1','$3','$5'}}.
-% fun_expr -> short_fun_clause '}' : build_fun(?line('$1'), ['$1']).
 fun_expr -> '{' fun_clauses '}' : build_fun(?line('$1'), '$2').
 fun_expr -> '.{' expr '}' : stoat_cuts:expr2fun('$2').
 fun_expr -> '&' pipe_calls : 
@@ -399,14 +392,17 @@ comp_op -> '=/=' : '$1'.
 
 pipe -> expr_200 pipe_calls : {'$1', '$2', ?line('$1')}.
 pipe_calls -> pipe_call : ['$1'].
-pipe_calls -> pipe_call pipe_calls : ['$1'|'$2'].
+pipe_calls -> pipe_call pipe_calls pipe_end : ['$1'|'$2'].
 pipe_call -> pipe_op expr_200 pipe_bindings : {'$1', '$2', '$3', ?line('$1')}.
 % pipe_call -> pipe_op atom fun_expr pipe_bindings : 
 % 	?p("t-------rying to make binding: ~p~n", ['$3']),
 % 	{'$1', {call, ?line('$1'), '$2', ['$3']}, '$4', ?line('$1')}.
 
+pipe_end -> '$empty' : ok.
+pipe_end -> 'end' : ok.
+
 % |{ is sugar for |> {
-pipe_call -> '|{' fun_clauses '}' : {{'|>', ?line('$1')}, build_fun(?line('$1'), '$2'), [], ?line('$1')}.
+% pipe_call -> '|{' fun_clauses '}' : {{'|>', ?line('$1')}, build_fun(?line('$1'), '$2'), [], ?line('$1')}.
 
 pipe_call -> '?[' cr_clauses pipe_bindings ']' : {'?[', '$2', '$3', ?line('$1')}.
 

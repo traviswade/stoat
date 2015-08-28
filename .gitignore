@@ -1,3 +1,5 @@
 src/stoat_lex.erl
 src/stoat_parse.erl
 ebin
+.eunit
+src/prf.erl

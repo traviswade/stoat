@@ -32,6 +32,7 @@ Rules.
 ->                : {token, {list_to_atom(TokenChars), TokenLine}}.
 
 ::                : {token, {list_to_atom(TokenChars), TokenLine}}.
+;;                : {token, {'end', TokenLine}}.
 
 <-                : {token, {list_to_atom(TokenChars), TokenLine}}.
 =>                : {token, {list_to_atom(TokenChars), TokenLine}}.

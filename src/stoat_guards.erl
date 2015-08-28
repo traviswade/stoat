@@ -7,6 +7,7 @@
 % guards is always empty for now. we will probably never use
 % them in that position so we could just clean them out.
 compose_guards (GuardedArgs) ->
+	% ?p("composing guars: `p~n", [GuardedArgs]),
 	compose_guards (GuardedArgs, {[], []}).
 	
 % TODO: don't know what this is required for function clauses
