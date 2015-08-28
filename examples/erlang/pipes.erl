@@ -51,5 +51,13 @@ if1 (X__) -> if X__ -> ok; true -> error end.
 
 bind1 (X__) -> Double = X__*2,
 	double(Double) + Double.
+	
+back_in_fwd1 (X__) ->
+	lists:map(fun(X__) -> X__+10 end, 
+		lists:filter(fun(X__) -> X__>1 end, X__)).
+		
+back_in_fwd2 (X__) ->
+	lists:map(fun(X__) -> X__+10 end, 
+		lists:filter(fun(X__) -> X__>1 end, X__)).
 
 

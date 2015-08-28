@@ -22,6 +22,21 @@ strings2 () -> "abc" "def".
 strings3 () -> "abc" ++ "def".
 strings4 () -> [$a|"bc"].
 
+
+% function calls. we can do them like normal:
+funcall1 (X) -> f(X).
+
+% and for single-argument functions, we can omit the parentheses.
+funcall2 (X) -> f X.
+
+% but watchout: function application has a high precedence:
+funcall3 (X) -> f X + 1.
+
+% to fix this you can either put the argument in parentheses or use the
+% the backward pipe operator, which has a low precedence
+funcall4 (X) -> f <| X + 1.
+
+
 % binary
 bin1 () -> <<"abc">>.
 

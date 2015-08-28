@@ -88,6 +88,18 @@ if1 ?{ok, error}.
 bind1 |> _*2 ~ Double
 	|> double
 	|> _+Double.
+	
+% Backward pipe. Note that it has a higher precedence than any of the forward pipes.
+
+back_in_fwd1 |< lists
+	|: filter <| .{_>1}
+	|: map <| .{_+10}.
+	
+% But wait! Act now and '<|' will do optional underscore replacement just like a forward pipe
+	
+back_in_fwd2 |< lists
+	|: filter <| _>1
+	|: map <| _+10.
 
 
 

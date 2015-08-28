@@ -2,7 +2,7 @@
 
 % -export([transform/1]).
 
--export([find_var/1, replace_underscore/2, replace_var/3, expr2fun/1]).
+-export([find_var/1, replace_underscore/2, replace_var/3, expr2fun/1, maybe_expr2fun/1]).
 -include_lib("stoat.hrl").
 
 
@@ -27,6 +27,15 @@ is_var ({var, _, V}=Var) when is_atom(V) ->
 	case atom_to_list(V) of
 		"_"++_ -> false;
 		_ -> {true, Var}
+	end.
+	
+maybe_expr2fun (Expr) ->
+	L = stoat_util:line(Expr),
+	Var = {var, L, 'X__'},
+	case replace_var(Var, Expr, fun is__/1) of
+		{true, Expr1} ->
+			{'fun', L, {clauses, [{clause, L, [Var], [], [Expr1]}]}};
+		_ -> Expr
 	end.
 	
 expr2fun (Expr) ->

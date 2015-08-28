@@ -16,6 +16,11 @@ strings2 () -> "abc" "def".
 strings3 () -> "abc" ++ "def".
 strings4 () -> [$a|"bc"].
 
+funcall1 (X) -> f(X).
+funcall2 (X) -> f(X).
+funcall3 (X) -> f(X)+1.
+funcall4 (X) -> f(X+1).
+
 bin1 () -> <<"abc">>.
 
 trycatch1 () -> try x+1 catch _:_ -> badarg end.

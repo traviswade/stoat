@@ -3,7 +3,7 @@
 Nonterminals
 form
 attribute attr_val
-expr exprs expr_100 expr_150 expr_160 expr_180 expr_200 expr_300 expr_400
+expr exprs expr_100 expr_150 expr_160 expr_180 expr_190 expr_200 expr_300 expr_400
 expr_500 expr_600 expr_650 expr_700 expr_800 expr_max
 macro
 list_comprehension lc_expr lc_exprs
@@ -33,7 +33,7 @@ Terminals
 char integer float atom string sstring var
 '(' ')' ',' '->' '{' '}' '[' ']' '<-' ';' '|' '<<' '>>' ':' '!'
 '<=' '||' '=>' '&' '#' '.' ':=' '@'
-'|>' '|+' '|-' '|)' '|/' '|<' '|:' '~' '|{' '.{' '?[' '?{'
+'|>' '|+' '|-' '|)' '|/' '|<' '|:' '~' '|{' '.{' '?[' '?{' '<|'
 '::'
 '?'
 '==' '=:=' '=/=' '<' '>' '>=' '=<' '/='
@@ -110,7 +110,10 @@ expr_160 -> expr_200 'andalso' expr_160 : ?mkop2('$1', '$2', '$3').
 expr_160 -> expr_180 : '$1'.
 
 expr_180 -> pipe : stoat_pipes:transform('$1').
-expr_180 -> expr_200 : '$1'.
+expr_180 -> expr_190 : '$1'.
+
+expr_190 -> expr_200 '<|' expr_190 : {call, ?line('$2'),'$1', [stoat_cuts:maybe_expr2fun('$3')]}.
+expr_190 -> expr_200 : '$1'.
 
 expr_200 -> expr_300 comp_op expr_300 : ?mkop2('$1', '$2', '$3').
 expr_200 -> expr_300 : '$1'.
@@ -246,8 +249,10 @@ function_call -> expr_800 call_argument_list '@' trailing_closure:
 function_call -> expr_800 call_argument_list trailing_closure:
 	{call, ?line('$1'), '$1', '$3' ++ element(1, '$2')}.
 
-function_call -> expr_800 fun_expr: 
-	{call, ?line('$1'), '$1', ['$2']}.
+% function_call -> expr_800 fun_expr: 
+	% {call, ?line('$1'), '$1', ['$2']}.
+% function_call -> expr_800 fun_expr: 
+% 	{call, ?line('$1'), '$1', ['$2']}.
 
 trailing_closure -> fun_expr : ['$1'].
 trailing_closure -> '$empty' : [].
@@ -294,6 +299,7 @@ fun_argument_list -> '$empty' : {[], 0}.
 
 call_argument_list -> '(' ')' : {[],?line('$1')}.
 call_argument_list -> '(' exprs ')' : {'$2',?line('$1')}.
+call_argument_list -> expr_max : {['$1'], 0}.
 
 argument_list -> '(' ')' : {[],?line('$1')}.
 argument_list -> '(' arg_exprs ')' : {'$2',?line('$1')}.
@@ -390,10 +396,10 @@ comp_op -> '>' : '$1'.
 comp_op -> '=:=' : '$1'.
 comp_op -> '=/=' : '$1'.
 
-pipe -> expr_200 pipe_calls : {'$1', '$2', ?line('$1')}.
+pipe -> expr_190 pipe_calls : {'$1', '$2', ?line('$1')}.
 pipe_calls -> pipe_call : ['$1'].
 pipe_calls -> pipe_call pipe_calls pipe_end : ['$1'|'$2'].
-pipe_call -> pipe_op expr_200 pipe_bindings : {'$1', '$2', '$3', ?line('$1')}.
+pipe_call -> pipe_op expr_190 pipe_bindings : {'$1', '$2', '$3', ?line('$1')}.
 % pipe_call -> pipe_op atom fun_expr pipe_bindings : 
 % 	?p("t-------rying to make binding: ~p~n", ['$3']),
 % 	{'$1', {call, ?line('$1'), '$2', ['$3']}, '$4', ?line('$1')}.
