@@ -1,13 +1,13 @@
 
 ### Background and motivation
 
-Stoat is a tiny language for the Erlang ecosystem. It is more or less a superset of Erlang, adding features that 
+Stoat is a small language for the Erlang ecosystem. It is more or less a superset of Erlang, adding features that 
 
  - Make some common functional patterns easier. Functional in the sense of creating, combining, applying and representing functions. Easier in the sense of typing with your fingers, and then later making sense of and maintaining.  
 	
- - Help remove boilerplate in ways that are well understood and common in modern languages. String interpolation. Multiline comments. Mixins. Not having to type the name of a module that is the same name as the file. Things like that.
+ - Help remove boilerplate in ways that are along the lines of what you might expect of a modern language. String interpolation. Multiline comments. Flexible module mixins. Automatic record to map conversion. Not having to type the name of a module that is the same name as the file. Things like that.
 
-For the most part, Stoat diverges from Erlang only at the lexer/parser level. It generates code that is completely compatible with--and convertible to--plain Erlang that is not that different from what you might write if you had to. There is nothing fundamentally new or profound that you can't do in Erlang with more keystrokes and ugly nesting. The following full module listing gives a taste of Stoat:
+Stoat diverges from Erlang only at the lexer/parser level. It generates code that is completely compatible with--and convertible to--plain Erlang that is not that different from what you might write if you had to. There is nothing fundamentally new or profound that you can't do in Erlang with more keystrokes and ugly nesting. This following module listing gives a taste of stoat:
 	
 	-export([my_chain/1, my_wrapper/1]).
 	
@@ -63,6 +63,10 @@ Stoat grew out of various parse transforms, macros and libraries. It uses [leex]
 Parse transforms in Stoat and Erlang.
 
 Erlang build artifacts.
+
+Record <-> map conversion
+
+Default module for |: based on guards and function calls.
 
 #### Medium soon
 
