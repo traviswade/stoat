@@ -1,13 +1,13 @@
 
 ### Background and motivation
 
-Stoat is a small language for the Erlang ecosystem. It is more or less a superset of Erlang, adding features that 
+Stoat is a small language that compiles to Erlang. It is more or less a superset of Erlang, adding features that 
 
  - Make some common functional patterns easier. Functional in the sense of creating, combining, applying and representing functions. Easier in the sense of typing with your fingers, and then later making sense of and maintaining.  
 	
- - Help remove boilerplate in ways that are along the lines of what you might expect of a modern language. String interpolation. Multiline comments. Flexible module mixins. Automatic record to map conversion. Not having to type the name of a module that is the same name as the file. Things like that.
+ - Help remove boilerplate in ways that are along the lines of what you might expect of a modern language. String interpolation. Multiline comments. Flexible module mixins. Automatic record to map conversion. Fewer redundant keywords and module and function names. Things like that.
 
-Stoat diverges from Erlang only at the lexer/parser level. It generates code that is completely compatible with--and convertible to--plain Erlang that is not that different from what you might write if you had to. There is nothing fundamentally new or profound that you can't do in Erlang with more keystrokes and ugly nesting. This following module listing gives a taste of stoat:
+Stoat diverges from Erlang only at the lexer/parser level. It generates code that is completely compatible with--and convertible to--plain Erlang that is not that different from what you might write if you had to. There is nothing fundamentally new or profound that you can't do in Erlang with more keystrokes and nesting. This module listing gives a taste of stoat:
 	
 	-export([my_chain/1, my_wrapper/1]).
 	
@@ -54,7 +54,7 @@ See linked examples and their [Erlang equivalents](examples/erlang). In most cas
 
 ### Technical
 
-Stoat grew out of various parse transforms, macros and libraries. It uses [leex](http://erlang.org/doc/man/leex.html) and [yecc](http://erlang.org/doc/man/yecc.html) to target erl syntax trees, which can then be compiled to bytecode or native code. Although this method provides very good compatibility with Erlang and has made some nice features pretty much free (robust shell, pretty-printed Erlang as an intermediate) and generally made Stoat easy to get up and running, it imposes some important limitations and is likely to change in the future.
+Stoat grew out of various parse transforms, macros and libraries. It uses [leex](http://erlang.org/doc/man/leex.html) and [yecc](http://erlang.org/doc/man/yecc.html) to target Erlang syntax trees. Although this method provides very good compatibility with Erlang and has made some nice features pretty much free (robust shell, pretty-printed Erlang as an intermediate) and generally made stoat easy to get up and running, it imposes some important limitations and is likely to change in the future.
 
 ### Coming soon
 

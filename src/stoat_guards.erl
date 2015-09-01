@@ -33,3 +33,4 @@ proc_guard (Arg, Expr) ->
 make_predicate (int) -> "is_integer";
 make_predicate (Atom) ->
 	"is_" ++ atom_to_list(Atom).
+	

@@ -60,4 +60,6 @@ back_in_fwd2 (X__) ->
 	lists:map(fun(X__) -> X__+10 end, 
 		lists:filter(fun(X__) -> X__>1 end, X__)).
 
+with_guard (X__) when is_list(X__) ->
+	lists:reverse(X__).
 

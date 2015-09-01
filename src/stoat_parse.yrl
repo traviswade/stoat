@@ -81,7 +81,7 @@ function_clause -> clause_args  clause_body :
 function_clause -> atom arg_guards pipe_calls : 
 	L = ?line('$1'),
 	{[Arg], Guards} = stoat_guards:compose_guards([{{var, L, 'X__'}, '$2'}]),
-	Expr = stoat_pipes:transform({Arg, '$3', L}),
+	Expr = stoat_pipes:transform({Arg, '$3', L, Guards}),
 	% flattening again. TODO: take care of this in the transform!
 	{clause, ?line('$1'), ?tokch('$1'), [Arg], stoat_guards:maybe_wrap(Guards), lists:flatten(Expr)}.
 	
@@ -112,7 +112,7 @@ expr_160 -> expr_180 : '$1'.
 expr_180 -> pipe : stoat_pipes:transform('$1').
 expr_180 -> expr_190 : '$1'.
 
-expr_190 -> expr_200 '<|' expr_190 : {call, ?line('$2'),'$1', [stoat_cuts:maybe_expr2fun('$3')]}.
+expr_190 -> expr_190 '<|' expr_200 : {call, ?line('$2'),'$1', [stoat_cuts:maybe_expr2fun('$3')]}.
 expr_190 -> expr_200 : '$1'.
 
 expr_200 -> expr_300 comp_op expr_300 : ?mkop2('$1', '$2', '$3').

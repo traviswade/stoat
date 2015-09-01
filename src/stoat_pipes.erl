@@ -11,7 +11,10 @@
 
 
 transform ({Input, Steps, Line}=In) -> 
-	proc_steps(Steps, #s{exprs=[Input]}).
+	proc_steps(Steps, #s{exprs=[Input]});
+	
+transform ({Input, Steps, Line, Guards}=In) -> 
+	proc_steps(Steps, #s{exprs=[Input], mod=guess_mod(Guards)}).
 
 proc_steps ([], #s{steps=Steps}=S) -> 
 	compose_call(S#s{steps=lists:reverse(Steps)});
@@ -119,6 +122,17 @@ do_call (#step{src=Src, wrappers=[W], line=L}, Input) ->
 		{true, Src1} ->  {call, L, W, [Src1, Input]};
 		_            ->  {call, L, W, [wrap_op(Src), Input]}
 	end.
+	
+	
+guess_mod ([H|T]) ->
+	case guess_mod(H) of
+		M when is_tuple(M) -> M;
+		_ -> guess_mod(T)
+	end;
+guess_mod ({call,_, {atom,L,Atom}=F,[_]}) -> guess_mod(F);
+guess_mod ({atom,L,is_list}) -> {{atom,L,lists}, -1};
+guess_mod ({atom,L,is_map}) -> {{atom,L,maps}, -1};
+guess_mod (_) -> none.
 
 wrap_op ({remote, L, M, F}=Call) ->
 	Arg = {var, L, 'X__'},

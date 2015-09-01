@@ -100,6 +100,8 @@ back_in_fwd1 |< lists
 back_in_fwd2 |< lists
 	|: filter <| _>1
 	|: map <| _+10.
+	
+with_guard::list |: reverse.
 
 
 
