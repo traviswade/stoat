@@ -75,13 +75,22 @@ replace_var (Var, {tuple, Line, Elems}=T, F) ->
 	end;
 replace_var (Var, {record_field, Line, Field, Val}=A, F) ->
 	case replace_var(Var, Val, F) of
-		% would we ever want to replace the Field? probably.
 		{true, Val1} -> {true, {record_field, Line, ?replraw(Field), Val1}};
 		_ -> case replace_var(Var, Field, F) of
 				{true, Field1} -> {true, {record_field, Line, Field1, Val}};
 				_ -> {false, A}
 			end
 	end;
+replace_var (Var, {record_field, Line, RecordVar, RecordName, Field}=R, F) ->
+	case replace_var(Var, RecordVar, F) of
+		{true, RecordVar1} -> {true, {record_field, Line, RecordVar1, RecordName, Field}};
+		_ ->
+			case replace_var(Var, Field, F) of
+				{true, Field1} -> {true, {record_field, Line, RecordVar, RecordName, Field1}};
+				_ -> {false, R}
+			end
+	end;
+	
 replace_var (Var, L, F) when is_list(L) ->
 	{Vals, Replaced} = lists:unzip(
 		[replace_var(Var, Item, F) || Item <- L]),

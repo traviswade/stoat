@@ -26,6 +26,8 @@ f12 (X__) -> #usr{login=X__, email=X__}.
 
 f13 (X__) -> X__#usr{login= <<"admin">>}.
 
+f14 (X__) -> X__#usr.name.
+
 % f1b (X__) -> X__.
 
 % f4b (X__) -> 

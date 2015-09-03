@@ -30,4 +30,6 @@ f12 |> #usr{login=_, email=_}.
 
 f13 |> _#usr{login= <<"admin">>}.
 
+f14 |> _#usr.name.
+
 % f1b -|> @.

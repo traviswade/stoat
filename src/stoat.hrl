@@ -4,3 +4,4 @@
 -define(p, error_logger:info_msg).
 
 -define(is(X), fun(MaybeX)->MaybeX=:=X end).
+

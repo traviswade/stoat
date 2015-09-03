@@ -65,8 +65,8 @@ to_list (X::list)    -> X;
 
 order (X, Y::(_<X)) -> {Y, X};
 	(X, Y)        -> {X, Y}.
-
--record(usr, {name, email}).
+-def(a(X),[X]).
+-record(usr, {name=abc, email}).
 name (#usr{name=N}) -> N.
 name1 (U) -> U#usr.name.
 

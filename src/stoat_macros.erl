@@ -1,10 +1,10 @@
 -module(stoat_macros).
 
--export([register_module/2, register_macro/2, expand_macro/1, handle_incl/1]).
+-export([register_module/2, register_macro/2, expand_macro/1, handle_incl/1, register_record/3]).
 -include_lib("stoat.hrl").
 
-% Handle BASIC (about the same as erlang) macros.
-% This module is a JOKE and it will be completely re-written soon.
+% Handle BASIC (about the same as erlang) macros and do lots of nice things with records.
+% This macro and import handling is a JOKE and it will be completely re-written soon.
 % It was slapped together to provide a bare minimum of requirements so that 
 % we can start using the language. It is NOT A PREPROCESSOR, but runs along with
 % and gets called from the regular parser, because that was a lot easier than trying to recreate epp. 
@@ -40,10 +40,11 @@ expand_macro ({atom, _L, K}) ->
 	get_macro(K);
 expand_macro ({call, _L, {atom, _, K}, Args}) ->
 	{Expr, OrigArgs} = get_macro({K, length(Args)}),
+	
 	lists:foldl(
 		fun ({Arg, {var, _, Orig}}, Acc) -> 
 			element(2, stoat_cuts:replace_var(Arg, Acc, ?is(Orig))) end, 
-		Expr, 
+		Expr,
 		lists:zip(Args, OrigArgs)).
 			
 get_macro (K) -> 
@@ -76,6 +77,57 @@ ensure_compiled (Incl) ->
 			?update_state(CachedState),
 			ok
 		end.
+		
+register_record (RecordName, {tuple, L, Fields}, Opts) ->
+	Arg = {var, L, 'X__'},	
+	register_macro({call, L, {atom, L, list_to_atom(atom_to_list(RecordName)++"_to_list")}, [Arg]}, 
+		record_to_list(Fields, RecordName, Arg, L)),
+	register_macro({call, L, {atom, L, list_to_atom("list_to_"++atom_to_list(RecordName))}, [Arg]}, 
+		list_to_record(Fields, RecordName, Arg, L)),
+	register_macro({call, L, {atom, L, list_to_atom(atom_to_list(RecordName)++"_to_map")}, [Arg]},
+		record_to_map(Fields, RecordName, Arg, L)),
+	register_macro({call, L, {atom, L, list_to_atom("map_to_"++atom_to_list(RecordName))}, [Arg]}, 
+		map_to_record(Fields, RecordName, Arg, L)).
+	
+record_to_list([], _, _, L) -> {nil, L};
+record_to_list ([H|T], RecordName, Arg, L) -> 
+	F = record_field_name(H),
+	{cons, L, 
+		{tuple, L, [F, {record_field, L, Arg, RecordName, F}]}, 
+		record_to_list(T, RecordName, Arg, L)}.
+		
+list_to_record (Fields, RecordName, Arg, L) ->
+	{record, L, RecordName, lists:foldl(fun ({match, L, Field, Default}, Acc) ->		
+				[{record_field, L, Field, {call, L,
+				      {remote,L,{atom,L,proplists},{atom,L,get_value}},
+				      [Field, Arg, Default]}}|Acc];
+			(Field, Acc) ->
+				[{record_field, L, Field, {call, L,
+				      {remote,L,{atom,L,proplists},{atom,L,get_value}},
+				      [Field, Arg]}}|Acc]
+			end,
+			[], lists:reverse(Fields))}.
+			
+record_to_map (Fields, RecordName, Arg, L) ->
+	{map, L, 
+		[{map_field_assoc, L, record_field_name(F), 
+			{record_field, L, Arg, RecordName, record_field_name(F)}} || F <- Fields]}.
+			
+map_to_record (Fields, RecordName, Arg, L) ->
+	{record, L, RecordName, lists:foldl(fun ({match, L, Field, Default}, Acc) ->		
+				[{record_field, L, Field, {call, L,
+				      {remote,L,{atom,L,maps},{atom,L,get}},
+				      [Field, Arg, Default]}}|Acc];
+			(Field, Acc) ->
+				[{record_field, L, Field, {call, L,
+				      {remote,L,{atom,L,maps},{atom,L,get}},
+				      [Field, Arg, {atom, L, undefined}]}}|Acc]
+			end,
+			[], lists:reverse(Fields))}.
+
+	
+record_field_name ({match, _L, Field, _Default}) -> Field;
+record_field_name (Field) -> Field.
 				
 handle_incl (Incl) ->
 	ensure_compiled(Incl),
