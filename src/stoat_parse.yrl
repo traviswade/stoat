@@ -532,10 +532,11 @@ build_attribute	({atom, L, mixin}, [{_Stringable, _L, M}]) ->
 build_attribute({atom,L,record}, Val) ->
     case Val of
 	[{atom,_L,Record},RecTuple, Opts] ->
-		stoat_macros:register_record(Record, RecTuple, Opts),
+		% TODO: this is all pretty redundant..
+		stoat_macros:register_record(Record, RecTuple, Opts, {attribute, L, mrecord, {Record,record_tuple(RecTuple)}}),
 	    {attribute, L, mrecord, {Record,record_tuple(RecTuple)}};
 	[{atom,_L,Record},RecTuple] ->
-		stoat_macros:register_record(Record, RecTuple, []),
+		stoat_macros:register_record(Record, RecTuple, [], {attribute, L, mrecord, {Record,record_tuple(RecTuple)}}),
 		{attribute, L, mrecord, {Record,record_tuple(RecTuple)}};
 	_ -> ret_err(badrecorddecl, Val)
     end.

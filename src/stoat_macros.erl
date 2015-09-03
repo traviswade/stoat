@@ -1,6 +1,6 @@
 -module(stoat_macros).
 
--export([register_module/2, register_macro/2, expand_macro/1, handle_incl/1, register_record/3]).
+-export([register_module/2, register_macro/2, expand_macro/1, handle_incl/1, register_record/4, transform/2]).
 -include_lib("stoat.hrl").
 
 % Handle BASIC (about the same as erlang) macros and do lots of nice things with records.
@@ -18,7 +18,7 @@
 % getting compiled in the same process and that separate modules are either in different
 % processes or are done sequentially.
 
--record(state, {mod, path, libs, macros}).
+-record(state, {mod, path, libs, macros, records}).
 -define(update_state(Expr), update_state(fun(S)->Expr end)).
 
 update_state (F) -> put(macro_state, F(get_state())).
@@ -27,14 +27,16 @@ get_state () -> case get(macro_state) of
 	_ -> #state{} 
 end.
 get_macros () -> (get_state())#state.macros.
+get_records () -> (get_state())#state.records.
 
 register_module (Path, Mod) ->
-	?update_state(S#state{mod=Mod, path=filename:dirname(Path), libs=[], macros=#{}}).
+	?update_state(S#state{mod=Mod, path=filename:dirname(Path), libs=[], macros=#{}, records=[]}).
 
 register_macro ({atom, _L, K}, V) ->
 	?update_state(S#state{macros=maps:put(K, V, S#state.macros)});
 register_macro ({call, _L, {atom, _, K}, Args}, V) ->
 	?update_state(S#state{macros=maps:put({K, length(Args)}, {V, Args}, S#state.macros)}).
+
 	
 expand_macro ({atom, _L, K}) ->
 	get_macro(K);
@@ -67,6 +69,7 @@ find_macro (K, [H|T]) ->
 	
 ensure_compiled (Incl) ->
 	catch ets:new(macros, [set, named_table, public]),
+	catch ets:new(records, [set, named_table, public]),
 	case ets:lookup(macros, Incl) of
 		[_] -> ok;
 		[] ->
@@ -74,11 +77,13 @@ ensure_compiled (Incl) ->
 			CachedState = get_state(),
 			stoat:parse_file(Fil),
 			catch ets:insert(macros, {Incl, get_macros()}),
+			catch ets:insert(records, {Incl, get_records()}),
 			?update_state(CachedState),
 			ok
 		end.
 		
-register_record (RecordName, {tuple, L, Fields}, Opts) ->
+register_record (RecordName, {tuple, L, Fields}=RT, Opts, Raw) ->
+	?update_state(S#state{records=[Raw|S#state.records]}),
 	Arg = {var, L, 'X__'},	
 	register_macro({call, L, {atom, L, list_to_atom(atom_to_list(RecordName)++"_to_list")}, [Arg]}, 
 		record_to_list(Fields, RecordName, Arg, L)),
@@ -128,10 +133,17 @@ map_to_record (Fields, RecordName, Arg, L) ->
 	
 record_field_name ({match, _L, Field, _Default}) -> Field;
 record_field_name (Field) -> Field.
-				
+
+% This gets called during parsing, from stoat_parse.yrl. Make sure
+% the included file has been parsed (and its mixins cached) and mark it as included			
 handle_incl (Incl) ->
 	ensure_compiled(Incl),
 	?update_state(S#state{libs=[Incl, S#state.libs]}).
+
+% And this is done after parsing is complete. Just prepend all the records from included files.
+transform (Forms, _Opts) ->
+	lists:foldl(fun (Lib, Acc) -> ets:lookup(records, Lib) ++ Acc end,
+		Forms, (get_state())#state.libs).
 	
 	
 	

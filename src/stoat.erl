@@ -97,5 +97,6 @@ version () -> "0.1".
 %%%%%%%%%%%%%%% 
 proc_forms (Forms, Opts) ->
 	lists:foldl(fun(Mod, Acc) -> Mod:transform(Acc, maps:put(print, true, Opts)) end, Forms, [
-		stoat_mixins]).
+		stoat_mixins,
+		stoat_macros]).
 		

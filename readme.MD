@@ -39,7 +39,7 @@ See linked examples and their [Erlang equivalents](examples/erlang). In most cas
 
  - [Basics](examples/stoat/basic.st), nearly all in common with Erlang.
 
- - [Pipes](examples/stoat/pipes.st), a rich set of pipe operators that help with much of what you might want to accomplish with monads in the absence of type inference.
+ - [Pipes](examples/stoat/pipes.st), a rich set of pipe operators that help with much of what you might want to accomplish with monads in the absence of type inference or the ability to limit side effects.
 
  - [Cuts and underscore substitution](examples/stoat/cuts.st) like you might find in Scala.
 
@@ -62,29 +62,25 @@ Stoat grew out of various parse transforms, macros and libraries. It uses [leex]
 
 #### Very soon
 
-Parse transforms in Stoat and Erlang.
+Parse transforms in stoat and Erlang.
 
-Erlang build artifacts.
+Erlang build artifacts. Smarter build support. The rebar plugin should be ashamed of itself.
 
-Record <-> map conversion
-
-Default module for |: based on guards and function calls.
+More flexible Record <-> map conversion
 
 #### Medium soon
 
- - A proper preprocessor (see the current stoat_macros module).
+A proper preprocessor (see the current stoat_macros module).
 
- - Types. There is currently no type support. In the future the guard syntax will be expanded to integrate with typer and dialyzer.
+Types. There is currently no type support. In the future the guard syntax will be expanded to integrate with typer and dialyzer.
 
- - Scripting and better console support.
+Scripting and better console support.
 
- - Smarter build support. The rebar plugin should be ashamed of itself.
-
- - emacs mode.
+emacs mode.
 
 #### Not so soon
 
- - javascript target
+javascript target
 
 ### Use
 
@@ -96,11 +92,11 @@ To run a stoat shell from within Erlang: `stoat_shell:start()`. Or start your ap
 
 #### Calling Stoat from Erlang
 
-	`stoat_module:stoat_fuction(AnyErlangArgument).`
+	stoat_module:stoat_fuction(AnyErlangArgument).
 	
 #### Calling Erlang from Stoat
 
-	`erlang_module:erlang_function(AnyStoatArgument)`
+	erlang_module:erlang_function(AnyStoatArgument)
 
 ### License
 

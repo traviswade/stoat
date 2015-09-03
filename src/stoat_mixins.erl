@@ -7,16 +7,6 @@
 % rearranged forms for easy lookup
 -record(mixin, {exports=[], functions=#{}}).
 
-% [{attribute,2,export,[{some_internal,0}]},
-%                      {attribute,mixin,mixin1},
-%                      {function,7,some_internal,0,
-%                                [{clause,7,[],[],[{atom,7,ok}]}]}]
-
-% [{mixin1,{mixin,[{frommixin1,1},{frommixin1a,1}],
-%                                     #{{frommixin1,0} => [{clause,5,[],[],[{atom,5,ok}]}],
-%                                       {frommixin1a,0} => [{clause,6,[],[],[{atom,6,ok}]}]}}}]
-% 
-
 transform (Forms, Opts) ->
 	mix_in_mixins(
 		gather_mixins(Forms, Opts, #mixin{}), 

@@ -1,3 +1,5 @@
 
 -def(somethingcommon, 1).
 -def(commonf(X), {ok, X}).
+
+-record(account, {number, balance}).
