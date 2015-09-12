@@ -9,9 +9,9 @@ f1 (X::int, Y::(int, _>X)) -> ok.
 
 % works the same way in fun expressions
 
-f2 () -> {X::int| X+1}.
+f2 () -> {|X::int| X+1}.
 
-f3 () -> {X::(_>4) | X+1; _ | 4}.
+f3 () -> {|X::(_>4) | X+1; _ | 4}.
 
 % and for direct-to-pipe functions, just append to the function name
 

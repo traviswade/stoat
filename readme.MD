@@ -5,13 +5,13 @@ Stoat is a small language that compiles to Erlang. It is more or less a superset
 
  - Make some common functional patterns easier. Functional in the sense of creating, combining, applying and representing functions. Easier in the sense of typing with your fingers, and then later making sense of and maintaining.  
 	
- - Help remove boilerplate in ways that are along the lines of what you might expect of a modern language. String interpolation. Multiline comments. Flexible module mixins. Automatic conversion between records and maps and lists. Fewer redundant keywords and module and function names. Things like that.
+ - Help remove boilerplate in ways that are along the lines of what you might expect of a modern language. String interpolation. Multiline comments. Flexible module mixins. Automatic conversion between records and maps and proplists. Fewer redundant keywords and module and function names. Things like that.
 
 Stoat diverges from Erlang only at the lexer/parser level. It generates code that is completely compatible with--and convertible to--plain Erlang that is not that different from what you might write if you had to. There is nothing fundamentally new or profound that you can't do in Erlang with more keystrokes and nesting. This module listing gives a taste of stoat:
 	
 	-export([my_chain/1, my_wrapper/1]).
 	
-	-def(maybe(Default), {{ok, Res}, F| F(Res); {error, _}, _| Default}).
+	-def(maybe(Default), {|{ok, Res}, F| F(Res); {error, _}, _| Default}).
 	-def(log, io:format).
 
 	my_chain::list
@@ -88,7 +88,7 @@ NOTE: Experimental. Do not use.
 
 To use, include as a rebar dependency, and add `{plugins, [stoat]}` in your rebar.config. It will blindly recompile each `.st` file on each rebar compile.
 
-To run a stoat shell from within Erlang: `stoat_shell:start()`. Or start your app using something like `erl -pa blah blah blah... -noshell -s stoat_shell`.
+To run a stoat shell from within Erlang: `stoat_shell:start()`. Or start your app using `erl -pa blah blah blah... -noshell -s stoat_shell`.
 
 #### Calling Stoat from Erlang
 

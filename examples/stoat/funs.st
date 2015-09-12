@@ -1,11 +1,13 @@
 
 % several ways to make a fun expression:
 
-% 1) {args|body}. Everything between the braces is the clause(s).
+% 1) {|args|body}. Everything between the braces is the clause(s).
 % Multiple clauses are separated with a ';'
 
 anonymous () -> 
-	lists:map({N| N + 1}, [1, 2, 3]).
+	lists:map({|N| N + 1}, [1, 2, 3]).
+	
+another () -> {|A,B| A+B}.
 	
 % 2) For one-argument, single-clause funs : .{body},
 % Underscore replacements works just as in pipes.
@@ -16,8 +18,11 @@ anoncuts () -> [
 	.{_+3}].
 
 multiclause () ->
-	{{struct, L}| L; 
+	{|{struct, L}| L; 
 	L| L}.
+	
+multi2 () ->
+	{|ok, A | A; _, B | err}.
 	
 % Trailing closures! Any kind of fun expression
 % following a function call works as if that fun were given as the FIRST
@@ -26,9 +31,9 @@ multiclause () ->
 % argument. No other options for now -- first is the typical position
 % in Erlang so that is the default.
 
-trailer () -> m:f(1)@{X | X + 1}. 
+trailer () -> m:f(1)@{|X | X + 1}. 
 	
-trailer1 () -> m:f(1){X | X+1}.
+trailer1 () -> m:f(1){|X | X+1}.
 
 % 3) &{pipe expression} = single-argument, single-clause fun with the argument
 % passed into the pipe.

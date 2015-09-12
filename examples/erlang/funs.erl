@@ -3,6 +3,9 @@
 anonymous () ->
 	lists:map(fun(N) -> N + 1 end, [1, 2, 3]).
 	
+another () -> fun (A, B) -> A + B end.
+
+	
 anoncuts () -> [
 	fun (X__) -> X__ end,
 	fun () -> 5 end,
@@ -12,6 +15,9 @@ multiclause () ->
 	fun ({struct, L}) -> L;
 		(L)           -> L
 	end.
+	
+multi2 () -> 
+	fun (ok, A) -> A ; (_, B) -> err end.
 	
 trailer () -> m:f(1, fun(X) -> X + 1 end).
 	

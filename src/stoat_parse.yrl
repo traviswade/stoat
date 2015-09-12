@@ -34,6 +34,7 @@ char integer float atom string sstring var
 '(' ')' ',' '->' '{' '}' '[' ']' '<-' ';' '|' '<<' '>>' ':' '!'
 '<=' '||' '=>' '&' '#' '.' ':=' '@'
 '|>' '|+' '|-' '|)' '|/' '|<' '|:' '~' '|{' '.{' '?[' '?{' '<|'
+'{|'
 '::'
 '?'
 '==' '=:=' '=/=' '<' '>' '>=' '=<' '/='
@@ -261,7 +262,7 @@ fun_expr -> '&' atom '/' integer :
 	{'fun',?line('$1'),{function,element(3, '$2'),element(3, '$4')}}.
 fun_expr -> '&' atom_or_var ':' atom_or_var '/' integer_or_var :
 	{'fun',?line('$1'),{function,'$2','$4','$6'}}.
-fun_expr -> '{' fun_clauses '}' : build_fun(?line('$1'), '$2').
+fun_expr -> '{|' fun_clauses '}' : build_fun(?line('$1'), '$2').
 fun_expr -> '.{' expr '}' : stoat_cuts:expr2fun('$2').
 fun_expr -> '&' pipe_calls : 
 	L = ?line('$1'),

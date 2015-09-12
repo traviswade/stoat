@@ -54,7 +54,7 @@ maps1 () -> #{a=>1}.
 maps2 (M) -> M#{b=>2}.
 
 sendrec () ->
-	F = {|receive N::integer -> log({int, N}); _ -> log(other) end},
+	F = {||receive N::integer -> log({int, N}); _ -> log(other) end},
 	Pid = spawn(F),
 	Pid ! 2.
 

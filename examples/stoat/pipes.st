@@ -4,7 +4,7 @@
 
 
 double |> _ * 2.
-add (X) -> {Y| Y + X}.
+add (X) -> {|Y| Y + X}.
 
 % The simplest case. |> alone works pretty much like the same
 % operator in F#, Elixir, Elm, etc.
