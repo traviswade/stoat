@@ -32,4 +32,6 @@ f13 |> _#usr{login= <<"admin">>}.
 
 f14 |> _#usr.name.
 
+f15 |> _ == 1.
+
 % f1b -|> @.
