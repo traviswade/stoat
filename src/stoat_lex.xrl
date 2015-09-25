@@ -3,6 +3,7 @@ Definitions.
 
 D = [0-9]
 S = [\s\t\n]
+H = [0-9a-fA-F]
 
 
 Rules.
@@ -10,8 +11,8 @@ Rules.
 
 [A-Z_][0-9a-zA-Z_]* : {token, {var, TokenLine, list_to_atom(TokenChars)}}.
 
-"([^"\\]|\\.)*"      : {token, {string, TokenLine, strip(TokenChars, TokenLen)}}.
-`([^`\\]|\\.)*`      : {token, {sstring, TokenLine, strip(TokenChars, TokenLen)}}.
+"([^"\\]|\\.)*"      : {token, {string, TokenLine, chars(strip(TokenChars, TokenLen))}}.
+`([^`\\]|\\.)*`      : {token, {sstring, TokenLine, chars(strip(TokenChars, TokenLen))}}.
 
 
 
@@ -44,6 +45,11 @@ Rules.
 \|\|              : {token, {list_to_atom(TokenChars), TokenLine}}.
 [\(\){}\[\];,\|]  : {token, {list_to_atom(TokenChars), TokenLine}}.
 \+\+              : {token, {list_to_atom(TokenChars), TokenLine}}.
+==                : {token, {list_to_atom(TokenChars), TokenLine}}.
+=:=               : {token, {list_to_atom(TokenChars), TokenLine}}.
+=/=               : {token, {list_to_atom(TokenChars), TokenLine}}.
+>=                : {token, {list_to_atom(TokenChars), TokenLine}}.
+=<                : {token, {list_to_atom(TokenChars), TokenLine}}.
 [+\-*/=:\&<>#~\!] : {token, {list_to_atom(TokenChars), TokenLine}}.
 
 \%.*\n            : skip_token.
@@ -76,3 +82,47 @@ receive           : {token, {list_to_atom(TokenChars), TokenLine}}.
 Erlang code.
 
 strip (TokenChars, TokenLen) -> lists:sublist(TokenChars, 2, TokenLen-2).
+
+
+%% COMPLETELY LIFTED FROM rvirding/lfe !
+
+base1([C|Cs], Base, SoFar) when C >= $0, C =< $9, C < Base + $0 ->
+    Next = SoFar * Base + (C - $0),
+    base1(Cs, Base, Next);
+base1([C|Cs], Base, SoFar) when C >= $a, C =< $z, C < Base + $a - 10 ->
+    Next = SoFar * Base + (C - $a + 10),
+    base1(Cs, Base, Next);
+base1([C|Cs], Base, SoFar) when C >= $A, C =< $Z, C < Base + $A - 10 ->
+    Next = SoFar * Base + (C - $A + 10),
+    base1(Cs, Base, Next);
+base1([C|Cs], _Base, SoFar) -> {SoFar,[C|Cs]};
+base1([], _Base, N) -> {N,[]}.
+
+chars([$\\,$x,C|Cs0]) ->
+    case hex_char(C) of
+        true ->
+            case base1([C|Cs0], 16, 0) of
+                {N,[$;|Cs1]} -> [N|chars(Cs1)];
+                _Other -> [escape_char($x)|chars([C|Cs0])]
+            end;
+        false -> [escape_char($x)|chars([C|Cs0])]
+    end;
+chars([$\\,C|Cs]) -> [escape_char(C)|chars(Cs)];
+chars([C|Cs]) -> [C|chars(Cs)];
+chars([]) -> [].
+
+hex_char(C) when C >= $0, C =< $9 -> true;
+hex_char(C) when C >= $a, C =< $f -> true;
+hex_char(C) when C >= $A, C =< $F -> true;
+hex_char(_) -> false.
+
+escape_char($b) -> $\b;                %\b = BS
+escape_char($t) -> $\t;                %\t = TAB
+escape_char($n) -> $\n;                %\n = LF
+escape_char($v) -> $\v;                %\v = VT
+escape_char($f) -> $\f;                %\f = FF
+escape_char($r) -> $\r;                %\r = CR
+escape_char($e) -> $\e;                %\e = ESC
+escape_char($s) -> $\s;                %\s = SPC
+escape_char($d) -> $\d;                %\d = DEL
+escape_char(C) -> C.

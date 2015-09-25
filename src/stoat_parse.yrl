@@ -100,7 +100,7 @@ expr -> expr_100 : '$1'.
 
 
 % not allowed in fun or function bodies.
-expr_100 -> expr_150 '=' expr_100 : {match,?line('$2'),'$1','$3'}.
+expr_100 -> expr_150 '=' expr_100 : {match,?line('$2'),'$1',unlist('$3')}.
 expr_100 -> expr_150 '!' expr_100 : ?mkop2('$1', '$2', '$3').
 expr_100 -> expr_150 : '$1'.
 
@@ -623,4 +623,6 @@ show (Item) ->
 	?p("show: ~p", [Item]),
 	Item.
 	
+unlist ([X]) -> X;
+unlist (X) -> X.
 
