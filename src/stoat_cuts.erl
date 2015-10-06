@@ -119,6 +119,18 @@ replace_var (Var, {record, Line, Head, Record, Fields}=Rec, F) ->
 					end
 			end
 	end;
+replace_var (Var, {bin, Line, Elements}=Bin, F) ->
+	case replace_var(Var, Elements, F) of
+		{true, Elements1} ->
+			{true, {bin, Line, Elements1}};
+		_ -> {false, Bin}
+	end;
+replace_var (Var, {bin_element, Line, Targ, default, [binary]}=El, F) ->
+	case replace_var(Var, Targ, F) of
+		{true, Targ1} -> {true, {bin_element, Line, Targ1, default, [binary]}};
+		_ -> {false, El}
+	end;
+
 replace_var (Var, {record, Line, Record, Fields}=A, F) ->
 	case replace_var(Var, Fields, F) of
 		{true, Fields1} -> {true, {record, Line, Record, Fields1}};
