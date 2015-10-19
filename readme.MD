@@ -1,13 +1,13 @@
 
 ### Background and motivation
 
-Stoat is a small language that compiles to Erlang. It is more or less a superset of Erlang, adding features that 
+Stoat is another front end for the Erlang compiler, because that is what the world needs now. It offers a syntax that is mostly pretty similar to Erlang, adding features that:
 
  - Make some common functional patterns easier. Functional in the sense of creating, combining, applying and representing functions. Easier in the sense of typing with your fingers, and then later making sense of and maintaining.  
 	
  - Help remove boilerplate in ways that are along the lines of what you might expect of a modern language. String interpolation. Multiline comments. Flexible module mixins. Automatic conversion between records and maps and proplists. Fewer redundant keywords and module and function names. Things like that.
 
-Stoat diverges from Erlang only at the lexer/parser level. It generates code that is completely compatible with--and convertible to--plain Erlang that is not that different from what you might write if you had to. There is nothing fundamentally new or profound that you can't do in Erlang with more keystrokes and nesting. This module listing gives a taste of stoat:
+There is nothing fundamentally new or profound that you can't do in Erlang with more keystrokes and lots of nesting. This module listing gives a taste of what is possible:
 	
 	-export([my_chain/1, my_wrapper/1]).
 	
@@ -24,10 +24,10 @@ Stoat diverges from Erlang only at the lexer/parser level. It generates code tha
 		|>  `#{length(_)} of the #{length(Evens)} unique even numbers over 200 met the criteria`.
 	
 	my_wrapper |+ ?maybe([])
-		|) risky_mod:risky_fun1
-		|> risky_mod:risky_fun2
-		|/ ?log(`so far so good: #{_}`)
-		|> risky_mod:risky_fun3.
+		|)  risky_mod:risky_fun1
+		|>  risky_mod:risky_fun2
+		|/  ?log(`so far so good: #{_}`)
+		|>  risky_mod:risky_fun3.
 		
 		
 Stoat is experimental, and its syntax, feature set and implementation are likely to change quite a bit. You should not use it under any circumstances.
@@ -35,7 +35,7 @@ Stoat is experimental, and its syntax, feature set and implementation are likely
 
 ### Documentation
 
-See linked examples and their [Erlang equivalents](examples/erlang). In most cases they are pretty well commented.
+See linked examples and their [Erlang equivalents](examples/erlang).
 
  - [Basics](examples/stoat/basic.st), nearly all in common with Erlang.
 
@@ -56,7 +56,7 @@ See linked examples and their [Erlang equivalents](examples/erlang). In most cas
 
 ### Technical
 
-Stoat grew out of various parse transforms, macros and libraries. It uses [leex](http://erlang.org/doc/man/leex.html) and [yecc](http://erlang.org/doc/man/yecc.html) to target Erlang syntax trees. Although this method provides very good compatibility with Erlang and has made some nice features pretty much free (robust shell, pretty-printed Erlang as an intermediate) and generally made stoat easy to get up and running, it imposes some important limitations and is likely to change in the future.
+Stoat grew out of various parse transforms, macros and libraries. It currently uses [leex](http://erlang.org/doc/man/leex.html) and [yecc](http://erlang.org/doc/man/yecc.html) to target Erlang syntax trees. 
 
 ### Coming soon
 
@@ -64,7 +64,7 @@ Stoat grew out of various parse transforms, macros and libraries. It uses [leex]
 
 Parse transforms in stoat and Erlang.
 
-Erlang build artifacts. Smarter build support. The rebar plugin should be ashamed of itself.
+Erlang build artifacts. Much better build support.
 
 More flexible Record <-> map conversion
 
@@ -78,9 +78,6 @@ Scripting and better console support.
 
 emacs mode.
 
-#### Not so soon
-
-javascript target
 
 ### Use
 
